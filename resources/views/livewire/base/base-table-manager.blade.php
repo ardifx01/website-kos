@@ -1,12 +1,73 @@
 <div class="p-6">
+    {{-- SESSION FLASH MESSAGE - Tampil otomatis setelah reload --}}
+    @if(session()->has('alert'))
+        <div class="mb-6 p-4 rounded-lg border-l-4 {{ 
+            session('alert.type') === 'success' ? 'bg-green-50 border-green-500 text-green-700' : (
+            session('alert.type') === 'error' ? 'bg-red-50 border-red-500 text-red-700' : (
+            session('alert.type') === 'warning' ? 'bg-yellow-50 border-yellow-500 text-yellow-700' : 
+            'bg-blue-50 border-blue-500 text-blue-700'))
+        }}" id="sessionAlert">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    @if(session('alert.type') === 'success')
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    @elseif(session('alert.type') === 'error')
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    @elseif(session('alert.type') === 'warning')
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                        </svg>
+                    @else
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    @endif
+                </div>
+                <div class="ml-3 flex-1">
+                    <p class="text-sm font-medium">{{ session('alert.message') }}</p>
+                </div>
+                <div class="ml-4 flex-shrink-0">
+                    <button onclick="closeSessionAlert()" class="inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 rounded p-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- LIVEWIRE VALIDATION ERRORS --}}
+    @if ($errors->any())
+        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+            <div class="flex items-start">
+                <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-700 mb-2">Terdapat kesalahan:</h3>
+                    <ul class="text-sm text-red-600 space-y-1">
+                        @foreach ($errors->all() as $error)
+                            <li>• {{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Header Section -->
     <div class="mb-6">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ $pageTitle }}</h1>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $pageDescription }}</p>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ $pageTitle ?? 'Data Management' }}</h1>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $pageDescription ?? 'Kelola data dengan mudah' }}</p>
             </div>
-            <div class="mt-4 sm:mt-0">
+            <div class="mt-4 sm:mt-0 flex space-x-2">
                 <button wire:click="create" 
                         class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,40 +270,35 @@
 
     <!-- Modern Delete Confirmation Modal -->
     @if($showDeleteModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto" style="z-index: 9999;">
+        <div class="fixed inset-0 z-[9999] overflow-y-auto" style="z-index: 9999 !important;">
             <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <!-- Background overlay with blur -->
-                <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300" 
+                <!-- Background overlay -->
+                <div class="fixed inset-0 bg-opacity-75 backdrop-blur-sm transition-opacity" 
                      wire:click="cancelDelete"
                      style="z-index: 9998;"></div>
                 
-                <!-- Modal dialog with modern animations -->
-                <div class="relative inline-block align-middle bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all duration-300 scale-95 opacity-0 sm:my-8 sm:align-middle sm:max-w-md sm:w-full animate-modal-enter"
+                <!-- Modal dialog -->
+                <div class="relative inline-block align-middle bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full"
                      style="z-index: 9999;">
                      
-                    <!-- Animated gradient background -->
-                    <div class="absolute inset-0 bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 dark:from-red-900/10 dark:via-orange-900/10 dark:to-yellow-900/10 opacity-50"></div>
-                    
-                    <div class="relative bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-6 pt-6 pb-4">
-                        <!-- Animated warning icon -->
-                        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-br from-red-100 to-orange-100 dark:from-red-900/20 dark:to-orange-900/20 mb-4 shadow-lg">
-                            <div class="h-8 w-8 text-red-600 dark:text-red-400 animate-bounce">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="animate-pulse">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-                                </svg>
-                            </div>
+                    <div class="bg-white dark:bg-gray-800 px-6 pt-6 pb-4">
+                        <!-- Warning icon -->
+                        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
+                            <svg class="h-8 w-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                            </svg>
                         </div>
                         
                         <div class="text-center">
-                            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3 tracking-tight">
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-3">
                                 {{ $deleteTitle }}
                             </h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+                            <p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
                                 {{ $deleteMessage }}
                             </p>
                             
                             @if(!empty($deleteDetails))
-                                <div class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700/50 dark:to-gray-800/50 rounded-xl p-4 mb-6 text-left border border-gray-200 dark:border-gray-600">
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-6 text-left">
                                     <div class="flex items-start space-x-3">
                                         <div class="flex-shrink-0 mt-0.5">
                                             <svg class="h-5 w-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,7 +313,7 @@
                                 </div>
                             @endif
 
-                            <!-- Warning message for irreversible action -->
+                            <!-- Warning message -->
                             <div class="flex items-center justify-center space-x-2 text-xs text-red-600 dark:text-red-400 mb-6 bg-red-50 dark:bg-red-900/20 rounded-lg p-3">
                                 <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -267,27 +323,15 @@
                         </div>
                     </div>
                     
-                    <!-- Modern modal footer with gradient -->
-                    <div class="bg-gradient-to-r from-gray-50 via-white to-gray-50 px-6 py-4 flex space-x-3 justify-end border-t border-gray-200 dark:border-gray-600">
+                    <!-- Modal footer -->
+                    <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex space-x-3 justify-end">
                         <button type="button" wire:click="cancelDelete"
-                                class="group relative px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transform hover:scale-105 shadow-sm hover:shadow-md">
-                            <span class="flex items-center">
-                                <svg class="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                                Batal
-                            </span>
+                                class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors duration-200">
+                            Batal
                         </button>
                         <button type="button" wire:click="executeDelete"
-                                class="group relative px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-red-600 via-red-700 to-red-800 hover:from-red-700 hover:via-red-800 hover:to-red-900 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 transform hover:scale-105 shadow-lg hover:shadow-xl">
-                            <span class="flex items-center">
-                                <svg class="w-4 h-4 mr-2 group-hover:animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                </svg>
-                                {{ $isBulkDelete ? 'Ya, Hapus Semua' : 'Ya, Hapus' }}
-                            </span>
-                            <!-- Subtle glow effect -->
-                            <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-red-600 to-red-800 opacity-0 group-hover:opacity-20 transition-opacity duration-200 blur"></div>
+                                class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors duration-200">
+                            {{ $isBulkDelete ? 'Ya, Hapus Semua' : 'Ya, Hapus' }}
                         </button>
                     </div>
                 </div>
@@ -327,6 +371,19 @@
             opacity: 1;
             transform: scale(1) translateY(0);
         }
+    }
+
+    /* Pastikan z-index tertinggi untuk modal delete */
+    .z-\\[9999\\] {
+        z-index: 9999 !important;
+    }
+    
+    .z-\\[10000\\] {
+        z-index: 10000 !important;
+    }
+    
+    .z-\\[10001\\] {
+        z-index: 10001 !important;
     }
     
     .animate-modal-enter {

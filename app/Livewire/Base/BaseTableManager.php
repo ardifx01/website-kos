@@ -147,30 +147,47 @@ abstract class BaseTableManager extends Component
             if ($this->modalMode === 'create') {
                 $record = $this->store();
                 
-                // Log create activity
                 if ($record && $this->enableLogging) {
                     $this->logActivity('created', $record->id, $this->getLogData($record), 'Record created via form');
                 }
+                
+                $message = $this->getCreateSuccessMessage();
             } else {
                 $oldRecord = $this->getModelClass()::find($this->recordId);
                 $oldData = $oldRecord ? $this->getLogData($oldRecord) : [];
                 
                 $record = $this->update();
                 
-                // Log update activity
                 if ($record && $this->enableLogging) {
                     $newData = $this->getLogData($record->fresh());
                     $this->logActivity('updated', $record->id, $this->getChangesData($oldData, $newData), 'Record updated via form');
                 }
+                
+                $message = $this->getUpdateSuccessMessage();
             }
 
             $this->closeModal();
-            $this->dispatch('alert', [
+            
+            // PERBAIKAN: Gunakan session flash message dan dispatch event
+            session()->flash('alert', [
                 'type' => 'success',
-                'message' => $this->modalMode === 'create' ? $this->getCreateSuccessMessage() : $this->getUpdateSuccessMessage()
+                'message' => $message
             ]);
+            
+            // Dispatch event untuk JavaScript
+            $this->dispatch('showAlert', [
+                'type' => 'success', 
+                'message' => $message
+            ]);
+            
         } catch (\Exception $e) {
-            $this->dispatch('alert', [
+            // Error message
+            session()->flash('alert', [
+                'type' => 'error',
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ]);
+            
+            $this->dispatch('showAlert', [
                 'type' => 'error',
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ]);
@@ -180,73 +197,106 @@ abstract class BaseTableManager extends Component
     // New delete confirmation methods
     public function confirmDelete($id)
     {
-        $record = $this->getModelClass()::findOrFail($id);
-        
-        // Check if record can be deleted
-        if ($this->cannotDelete($record)) {
-            $this->dispatch('alert', [
-                'type' => 'warning',
-                'message' => $this->getCannotDeleteMessage($record)
+        try {
+            $record = $this->getModelClass()::findOrFail($id);
+            
+            if ($this->cannotDelete($record)) {
+                session()->flash('alert', [
+                    'type' => 'warning',
+                    'message' => $this->getCannotDeleteMessage($record)
+                ]);
+                
+                $this->dispatch('showAlert', [
+                    'type' => 'warning',
+                    'message' => $this->getCannotDeleteMessage($record)
+                ]);
+                return;
+            }
+
+            $this->deleteRecordId = $id;
+            $this->isBulkDelete = false;
+            $this->deleteTitle = $this->getDeleteTitle($record) ?: 'Konfirmasi Hapus Data';
+            $this->deleteMessage = $this->getDeleteMessage($record) ?: 'Apakah Anda yakin ingin menghapus data ini?';
+            $this->deleteDetails = $this->getDeleteDetails($record) ?: $this->getRecordIdentifier($record);
+            $this->showDeleteModal = true;
+
+            $this->logActivity('delete_requested', $record->id, ['record_name' => $this->getRecordIdentifier($record)]);
+
+        } catch (\Exception $e) {
+            session()->flash('alert', [
+                'type' => 'error',
+                'message' => 'Error: ' . $e->getMessage()
             ]);
-            return;
+            
+            $this->dispatch('showAlert', [
+                'type' => 'error',
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
         }
-
-        $this->deleteRecordId = $id;
-        $this->isBulkDelete = false;
-        
-        // Set delete modal properties
-        $this->deleteTitle = $this->getDeleteTitle($record);
-        $this->deleteMessage = $this->getDeleteMessage($record);
-        $this->deleteDetails = $this->getDeleteDetails($record);
-        
-        $this->showDeleteModal = true;
-
-        // Log activity
-        $this->logActivity('delete_requested', $record->id, ['record_name' => $this->getRecordIdentifier($record)]);
     }
 
     public function confirmBulkDelete()
     {
-        if (empty($this->selectedRecords)) {
-            $this->dispatch('alert', [
-                'type' => 'warning',
-                'message' => 'Pilih data yang ingin dihapus!'
-            ]);
-            return;
-        }
-
-        // Check if any selected records cannot be deleted
-        $records = $this->getModelClass()::whereIn('id', $this->selectedRecords)->get();
-        $cannotDeleteRecords = [];
-        
-        foreach ($records as $record) {
-            if ($this->cannotDelete($record)) {
-                $cannotDeleteRecords[] = $this->getRecordIdentifier($record);
+        try {
+            if (empty($this->selectedRecords)) {
+                session()->flash('alert', [
+                    'type' => 'warning',
+                    'message' => 'Pilih data yang ingin dihapus!'
+                ]);
+                
+                $this->dispatch('showAlert', [
+                    'type' => 'warning',
+                    'message' => 'Pilih data yang ingin dihapus!'
+                ]);
+                return;
             }
-        }
-        
-        if (!empty($cannotDeleteRecords)) {
-            $this->dispatch('alert', [
-                'type' => 'warning',
-                'message' => 'Beberapa data tidak dapat dihapus: ' . implode(', ', $cannotDeleteRecords)
+
+            $records = $this->getModelClass()::whereIn('id', $this->selectedRecords)->get();
+            $cannotDeleteRecords = [];
+            
+            foreach ($records as $record) {
+                if ($this->cannotDelete($record)) {
+                    $cannotDeleteRecords[] = $this->getRecordIdentifier($record);
+                }
+            }
+            
+            if (!empty($cannotDeleteRecords)) {
+                $message = 'Beberapa data tidak dapat dihapus: ' . implode(', ', $cannotDeleteRecords);
+                
+                session()->flash('alert', [
+                    'type' => 'warning',
+                    'message' => $message
+                ]);
+                
+                $this->dispatch('showAlert', [
+                    'type' => 'warning',
+                    'message' => $message
+                ]);
+                return;
+            }
+
+            $this->isBulkDelete = true;
+            $this->deleteTitle = 'Konfirmasi Hapus Massal';
+            $this->deleteMessage = 'Apakah Anda yakin ingin menghapus ' . count($this->selectedRecords) . ' data yang dipilih? Tindakan ini tidak dapat dibatalkan.';
+            $this->deleteDetails = count($this->selectedRecords) . ' data akan dihapus secara permanen.';
+            $this->showDeleteModal = true;
+
+            $this->logActivity('bulk_delete_requested', null, [
+                'selected_count' => count($this->selectedRecords),
+                'selected_ids' => $this->selectedRecords
             ]);
-            return;
+
+        } catch (\Exception $e) {
+            session()->flash('alert', [
+                'type' => 'error',
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
+            
+            $this->dispatch('showAlert', [
+                'type' => 'error',
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
         }
-
-        $this->isBulkDelete = true;
-        
-        // Set bulk delete modal properties
-        $this->deleteTitle = 'Konfirmasi Hapus Massal';
-        $this->deleteMessage = 'Apakah Anda yakin ingin menghapus ' . count($this->selectedRecords) . ' data yang dipilih? Tindakan ini tidak dapat dibatalkan.';
-        $this->deleteDetails = count($this->selectedRecords) . ' data akan dihapus secara permanen.';
-        
-        $this->showDeleteModal = true;
-
-        // Log bulk delete request
-        $this->logActivity('bulk_delete_requested', null, [
-            'selected_count' => count($this->selectedRecords),
-            'selected_ids' => $this->selectedRecords
-        ]);
     }
 
     public function executeDelete()
@@ -254,22 +304,51 @@ abstract class BaseTableManager extends Component
         try {
             if ($this->isBulkDelete) {
                 $this->performBulkDelete();
+                $message = $this->getBulkDeleteSuccessMessage();
             } else {
                 $this->performSingleDelete();
+                $message = $this->getDeleteSuccessMessage();
             }
             
             $this->cancelDelete();
             
-            $this->dispatch('alert', [
+            // Success message
+            session()->flash('alert', [
                 'type' => 'success',
-                'message' => $this->isBulkDelete ? $this->getBulkDeleteSuccessMessage() : $this->getDeleteSuccessMessage()
+                'message' => $message
             ]);
+            
+            $this->dispatch('showAlert', [
+                'type' => 'success',
+                'message' => $message
+            ]);
+
+            $this->resetPage();
+            
         } catch (\Exception $e) {
-            $this->dispatch('alert', [
+            session()->flash('alert', [
+                'type' => 'error',
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ]);
+            
+            $this->dispatch('showAlert', [
                 'type' => 'error',
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ]);
         }
+    }
+
+    protected function showMessage($type, $message)
+    {
+        session()->flash('alert', [
+            'type' => $type,
+            'message' => $message
+        ]);
+        
+        $this->dispatch('showAlert', [
+            'type' => $type,
+            'message' => $message
+        ]);
     }
 
     public function cancelDelete()
