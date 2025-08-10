@@ -110,6 +110,9 @@
                 <flux:navlist.item :href="route('dashboard')" icon="home" :current="request()->routeIs('dashboard')" wire:navigate>
                     Dashboard
                 </flux:navlist.item>
+                <flux:navlist.item :href="route('users.index')" icon="home" :current="request()->routeIs('users.*')" wire:navigate>
+                    Manajemen Pengguna
+                </flux:navlist.item>
                 <flux:navlist.item :href="route('dashboard')" icon="calendar" :current="request()->routeIs('booking.*')" wire:navigate>
                     Booking Kamar
                 </flux:navlist.item>

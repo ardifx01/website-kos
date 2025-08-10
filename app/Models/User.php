@@ -69,4 +69,16 @@ class User extends Authenticatable
     {
         return $this->belongsTo(User::class, 'deleted_by');
     }
+
+    public function initials(): string
+    {
+        if (!$this->name) {
+            return '';
+        }
+
+        return collect(explode(' ', $this->name))
+            ->map(fn ($word) => strtoupper(substr($word, 0, 1)))
+            ->implode('');
+    }
+
 }
