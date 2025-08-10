@@ -342,18 +342,23 @@
     <!-- Loading Indicator -->
     <div wire:loading class="fixed inset-0 z-50 flex items-center justify-center bg-opacity-50 backdrop-blur-sm" style="z-index: 10000;">
         <div class="bg-white rounded-2xl p-8 shadow-2xl border border-gray-200 dark:border-gray-700">
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center justify-center space-x-4">
                 <div class="relative">
+                    <!-- Main spinning circle -->
                     <svg class="animate-spin h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
+                    
+                    <!-- Ping effect -->
                     <div class="absolute inset-0 animate-ping">
                         <svg class="h-8 w-8 text-blue-400 opacity-20" fill="none" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         </svg>
                     </div>
                 </div>
+                
+                <!-- Loading text -->
                 <span class="text-lg font-medium text-gray-700 dark:text-gray-300">Memproses...</span>
             </div>
         </div>
@@ -377,24 +382,24 @@
     .z-\\[9999\\] {
         z-index: 9999 !important;
     }
-    
+
     .z-\\[10000\\] {
         z-index: 10000 !important;
     }
-    
+
     .z-\\[10001\\] {
         z-index: 10001 !important;
     }
-    
+
     .animate-modal-enter {
         animation: modal-enter 0.3s ease-out forwards;
     }
-    
+
     /* Custom hover effects */
     .group:hover .group-hover\:animate-wiggle {
         animation: wiggle 0.3s ease-in-out;
     }
-    
+
     @keyframes wiggle {
         0%, 7% { transform: rotateZ(0); }
         15% { transform: rotateZ(-15deg); }
@@ -404,22 +409,102 @@
         35% { transform: rotateZ(-4deg); }
         40%, 100% { transform: rotateZ(0); }
     }
-    
+
     /* Smooth transitions for all interactive elements */
     button, input[type="checkbox"], select {
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
+
     /* Enhanced focus styles */
     button:focus-visible, input:focus-visible, select:focus-visible {
         outline: 2px solid theme(colors.blue.500);
         outline-offset: 2px;
     }
-    
+
     /* Dark mode improvements */
     @media (prefers-color-scheme: dark) {
         .backdrop-blur-sm {
             backdrop-filter: blur(8px);
+        }
+    }
+
+    /* PERBAIKAN: Custom styles for perfect loading centering */
+    .loading-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: 10000 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background-color: rgba(0, 0, 0, 0.5) !important;
+        backdrop-filter: blur(4px) !important;
+    }
+
+    /* Animation for the spinning effect */
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @keyframes ping {
+        75%, 100% {
+            transform: scale(2);
+            opacity: 0;
+        }
+    }
+
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+
+    .animate-ping {
+        animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+
+    /* PERBAIKAN: Pastikan loading content berada tepat di tengah */
+    [wire\:loading] {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 10000 !important;
+    }
+
+    /* Loading container positioning */
+    [wire\:loading] > div {
+        position: relative !important;
+        transform: translate(0, 0) !important;
+        margin: auto !important;
+    }
+
+    .ripple {
+        position: absolute;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.3);
+        transform: scale(0);
+        animation: ripple-animation 0.6s linear;
+        pointer-events: none;
+    }
+
+    @keyframes ripple-animation {
+        to {
+            transform: scale(4);
+            opacity: 0;
         }
     }
 </style>
@@ -596,20 +681,6 @@
 </script>
 
 <style>
-    .ripple {
-        position: absolute;
-        border-radius: 50%;
-        background-color: rgba(255, 255, 255, 0.3);
-        transform: scale(0);
-        animation: ripple-animation 0.6s linear;
-        pointer-events: none;
-    }
     
-    @keyframes ripple-animation {
-        to {
-            transform: scale(4);
-            opacity: 0;
-        }
-    }
 </style>
 @endpush

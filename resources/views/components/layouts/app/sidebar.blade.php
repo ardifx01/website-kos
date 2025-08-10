@@ -121,8 +121,11 @@
                     <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('komplain.*')" wire:navigate>
                         Komplain
                     </flux:navlist.item>
-                    <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('riwayat-kamar.*')" wire:navigate>
-                        Riwayat Kamar
+                    <flux:navlist.item :href="route('kamar-manager.index')" :current="request()->routeIs('kamar-manager.*')" wire:navigate>
+                        Kamar
+                    </flux:navlist.item>
+                    <flux:navlist.item :href="route('fasilitas-kamar-manager.index')" :current="request()->routeIs('fasilitas-kamar-manager-kamar.*')" wire:navigate>
+                        Fasilitas Kamar
                     </flux:navlist.item>
                 </flux:navlist.group>
 
