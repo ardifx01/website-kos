@@ -101,69 +101,58 @@
             <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
             <a href="{{ route('dashboard') }}" class="me-5 flex items-center space-x-2 rtl:space-x-reverse" wire:navigate>
-                
+                <x-app-logo />
             </a>
 
             <flux:navlist class="w-64">
-
-                <!-- Menu Utama -->
-                <flux:navlist.item :href="route('dashboard')" icon="home" :current="request()->routeIs('dashboard')" wire:navigate>
-                    Dashboard
-                </flux:navlist.item>
-                <flux:navlist.item :href="route('users.index')" icon="home" :current="request()->routeIs('users.*')" wire:navigate>
-                    Manajemen Pengguna
-                </flux:navlist.item>
-                <flux:navlist.item :href="route('dashboard')" icon="calendar" :current="request()->routeIs('booking.*')" wire:navigate>
-                    Booking Kamar
-                </flux:navlist.item>
-
-                <!-- Manajemen Data -->
-                <flux:navlist.group heading="Manajemen Data" expandable>
                     <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('penyewa.*')" wire:navigate>
-                        Data Penyewa
+                        Dashboard
+                    </flux:navlist.item>
+                <flux:navlist.group heading="Data & Transaksi" expandable>
+                    <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('penyewa.*')" wire:navigate>
+                        Penyewa
                     </flux:navlist.item>
                     <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('pembayaran.*')" wire:navigate>
-                        Pembayaran & Bukti
+                        Pembayaran
                     </flux:navlist.item>
                     <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('jatuh-tempo.*')" wire:navigate>
-                        Pengingat Jatuh Tempo
+                        Pengingat Pembayaran
                     </flux:navlist.item>
                     <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('komplain.*')" wire:navigate>
-                        Komplain & Penanganan
+                        Komplain
                     </flux:navlist.item>
                     <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('riwayat-kamar.*')" wire:navigate>
                         Riwayat Kamar
                     </flux:navlist.item>
                 </flux:navlist.group>
 
-                <!-- Hak Akses -->
-                <flux:navlist.group heading="Pengguna & Hak Akses" expandable>
-                    <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('users.*')" wire:navigate>
-                        Manajemen Pengguna
+                <flux:navlist.group heading="Pengguna & Akses" expandable>
+                    <flux:navlist.item :href="route('users.index')" :current="request()->routeIs('users.*')" wire:navigate>
+                        Pengguna
                     </flux:navlist.item>
-                    <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('roles.*')" wire:navigate>
-                        Hak Akses & Role
+                    <flux:navlist.item :href="route('roles.index')" :current="request()->routeIs('roles.*')" wire:navigate>
+                        Role & Hak Akses
                     </flux:navlist.item>
-                    <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('activity-log.*')" wire:navigate>
-                        Riwayat Aktivitas
+                    <flux:navlist.item :href="route('activity-log-manager.index')" :current="request()->routeIs('activity-log-manager.*')" wire:navigate>
+                        Aktivitas Pengguna
                     </flux:navlist.item>
                 </flux:navlist.group>
 
-                <!-- Laporan & Ekspor -->
-                <flux:navlist.group heading="Laporan" expandable>
+                <flux:navlist.group heading="Laporan & Ekspor" expandable>
                     <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('laporan-keuangan.*')" wire:navigate>
-                        Laporan Keuangan Bulanan
+                        Keuangan Bulanan
                     </flux:navlist.item>
                     <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('histori-harga.*')" wire:navigate>
-                        Histori Harga Sewa
+                        Histori Harga
                     </flux:navlist.item>
                     <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('komunikasi-penting.*')" wire:navigate>
-                        Komunikasi Penting
+                        Komunikasi
                     </flux:navlist.item>
                     <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('export.*')" wire:navigate>
-                        Export PDF / Excel
+                        Export PDF/Excel
                     </flux:navlist.item>
                 </flux:navlist.group>
+
 
             </flux:navlist>
 

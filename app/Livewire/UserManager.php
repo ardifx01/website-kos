@@ -8,6 +8,7 @@ use App\Livewire\Base\BaseTableManager;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Database\Eloquent\Model;
 
 class UserManager extends BaseTableManager
 {
@@ -121,7 +122,7 @@ class UserManager extends BaseTableManager
         return $rules;
     }
 
-    protected function store(): void
+    protected function store(): ?Model
     {
         $data = [
             'role_id' => $this->role_id,
@@ -137,10 +138,13 @@ class UserManager extends BaseTableManager
             $data['photo'] = $this->photo->store('users', 'public');
         }
 
-        User::create($data);
+        $user = User::create($data);
+
+        // Return the created record for global logging
+        return $user;
     }
 
-    protected function update(): void
+    protected function update(): ?Model
     {
         $user = User::findOrFail($this->recordId);
         
@@ -166,6 +170,57 @@ class UserManager extends BaseTableManager
         }
 
         $user->update($data);
+
+        // Return the updated record for global logging
+        return $user;
+    }
+
+    /**
+     * Override getLogData untuk customize data yang di-log
+     * Menambahkan informasi role dan menghapus data sensitif
+     */
+    protected function getLogData($record): array
+    {
+        $data = parent::getLogData($record);
+        
+        // Tambah informasi role ke log
+        if ($record->role) {
+            $data['role_name'] = $record->role->name;
+        }
+        
+        // Hapus data sensitif tambahan yang spesifik untuk User
+        unset($data['email_verified_at']);
+        
+        return $data;
+    }
+
+    protected function cannotDelete($record): bool
+    {
+        // Tidak bisa hapus diri sendiri
+        if (auth()->id() == $record->id) {
+            return true;
+        }
+        
+        // Tidak bisa hapus super admin
+        if ($record->role && $record->role->name === 'super-admin') {
+            return true;
+        }
+
+        
+        return false;
+    }
+    
+    protected function getCannotDeleteMessage($record): string
+    {
+        if (auth()->id() == $record->id) {
+            return 'Anda tidak dapat menghapus akun Anda sendiri!';
+        }
+        
+        if ($record->role && $record->role->name === 'super-admin') {
+            return true;
+        }
+        
+        return parent::getCannotDeleteMessage($record);
     }
 
     protected function getAdditionalViewData(): array

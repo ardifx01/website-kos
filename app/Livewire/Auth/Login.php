@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
+use App\Services\ActivityLogger;
 
 #[Layout('components.layouts.auth')]
 class Login extends Component
@@ -65,6 +66,20 @@ class Login extends Component
                 'minutes' => ceil($seconds / 60),
             ]),
         ]);
+    }
+
+    // Di method login yang berhasil
+    protected function authenticated(Request $request, $user)
+    {
+        ActivityLogger::logLogin($user->id);
+    }
+
+    // Di method logout
+    protected function loggedOut(Request $request)
+    {
+        if ($request->user()) {
+            ActivityLogger::logLogout($request->user()->id);
+        }
     }
 
     /**

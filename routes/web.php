@@ -6,7 +6,8 @@ use App\Livewire\Settings\Profile;
 use Illuminate\Support\Facades\Route;
 
 use App\Livewire\UserManager;
-
+use App\Livewire\RoleManager;
+use App\Livewire\ActivityLogManager;
 
 // Route::get('/', function () {
 //     return view('welcome');
@@ -23,6 +24,8 @@ Route::view('dashboard', 'dashboard')
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
     Route::get('/users', UserManager::class)->name('users.index');
+    Route::get('/roles', RoleManager::class)->name('roles.index');
+    Route::get('/activity-log-manager', ActivityLogManager::class)->name('activity-log-manager.index');
     Route::get('settings/profile', Profile::class)->name('settings.profile');
     Route::get('settings/password', Password::class)->name('settings.password');
     Route::get('settings/appearance', Appearance::class)->name('settings.appearance');

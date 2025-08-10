@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
+use App\Traits\HasActivityLog;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasFactory, Notifiable, SoftDeletes, HasActivityLog;
 
     protected $fillable = [
         'role_id',
@@ -42,6 +43,11 @@ class User extends Authenticatable
     public function role()
     {
         return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    public function hasRole($roleName)
+    {
+        return $this->roles?->pluck('name')->contains($roleName) ?? false;
     }
 
     /**
