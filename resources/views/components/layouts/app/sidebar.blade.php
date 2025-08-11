@@ -115,10 +115,10 @@
                     <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('pembayaran.*')" wire:navigate>
                         Pembayaran
                     </flux:navlist.item>
-                    <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('jatuh-tempo.*')" wire:navigate>
-                        Pengingat Pembayaran
-                    </flux:navlist.item>
-                    <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('komplain.*')" wire:navigate>
+                    <!-- <flux:navlist.item :href="route('form-komplain.index')" :current="request()->routeIs('form-komplain.*')" wire:navigate>
+                        Pengingat Komplain
+                    </flux:navlist.item> -->
+                    <flux:navlist.item :href="route('complaint-manager.index')" :current="request()->routeIs('complaint-manager.*')" wire:navigate>
                         Komplain
                     </flux:navlist.item>
                     <flux:navlist.item :href="route('kamar-manager.index')" :current="request()->routeIs('kamar-manager.*')" wire:navigate>
