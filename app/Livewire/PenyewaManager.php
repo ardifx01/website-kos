@@ -14,12 +14,10 @@ class PenyewaManager extends BaseTableManager
     public $nama_lengkap;
     public $email;
     public $nomor_hp;
-    public $jenis_kelamin;
     public $pekerjaan;
     public $alamat_ktp;
     public $alamat_domisili;
     public $tipe_kamar;
-    public $jumlah_orang;
     public $tanggal_masuk;
     public $status_sewa;
     public $catatan;
@@ -88,9 +86,6 @@ class PenyewaManager extends BaseTableManager
             ->when($this->tipeKamarFilter, function ($query) {
                 $query->where('tipe_kamar', $this->tipeKamarFilter);
             })
-            ->when($this->jenisKelaminFilter, function ($query) {
-                $query->where('jenis_kelamin', $this->jenisKelaminFilter);
-            })
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
     }
@@ -101,12 +96,10 @@ class PenyewaManager extends BaseTableManager
         $this->nama_lengkap = '';
         $this->email = '';
         $this->nomor_hp = '';
-        $this->jenis_kelamin = '';
         $this->pekerjaan = '';
         $this->alamat_ktp = '';
         $this->alamat_domisili = '';
         $this->tipe_kamar = '';
-        $this->jumlah_orang = 1;
         $this->tanggal_masuk = '';
         $this->status_sewa = 'aktif';
         $this->catatan = '';
@@ -118,12 +111,10 @@ class PenyewaManager extends BaseTableManager
         $this->nama_lengkap = $record->nama_lengkap;
         $this->email = $record->email;
         $this->nomor_hp = $record->nomor_hp;
-        $this->jenis_kelamin = $record->jenis_kelamin;
         $this->pekerjaan = $record->pekerjaan;
         $this->alamat_ktp = $record->alamat_ktp;
         $this->alamat_domisili = $record->alamat_domisili;
         $this->tipe_kamar = $record->tipe_kamar;
-        $this->jumlah_orang = $record->jumlah_orang;
         $this->tanggal_masuk = $record->tanggal_masuk?->format('Y-m-d');
         $this->status_sewa = $record->status_sewa;
         $this->catatan = $record->catatan;
@@ -141,12 +132,10 @@ class PenyewaManager extends BaseTableManager
                 Rule::unique('penyewas', 'email')->ignore($this->recordId),
             ],
             'nomor_hp' => 'required|string|max:20',
-            'jenis_kelamin' => 'required|in:laki-laki,perempuan',
             'pekerjaan' => 'required|string|max:255',
             'alamat_ktp' => 'required|string',
             'alamat_domisili' => 'nullable|string',
             'tipe_kamar' => 'required|in:deluxe,premium',
-            'jumlah_orang' => 'required|integer|min:1|max:10',
             'tanggal_masuk' => 'required|date',
             'status_sewa' => 'required|in:aktif,tidak_aktif,keluar',
             'catatan' => 'nullable|string',
@@ -160,12 +149,10 @@ class PenyewaManager extends BaseTableManager
             'nama_lengkap' => $this->nama_lengkap,
             'email' => $this->email,
             'nomor_hp' => $this->nomor_hp,
-            'jenis_kelamin' => $this->jenis_kelamin,
             'pekerjaan' => $this->pekerjaan,
             'alamat_ktp' => $this->alamat_ktp,
             'alamat_domisili' => $this->alamat_domisili,
             'tipe_kamar' => $this->tipe_kamar,
-            'jumlah_orang' => $this->jumlah_orang,
             'tanggal_masuk' => $this->tanggal_masuk,
             'status_sewa' => $this->status_sewa,
             'catatan' => $this->catatan,
@@ -187,12 +174,10 @@ class PenyewaManager extends BaseTableManager
             'nama_lengkap' => $this->nama_lengkap,
             'email' => $this->email,
             'nomor_hp' => $this->nomor_hp,
-            'jenis_kelamin' => $this->jenis_kelamin,
             'pekerjaan' => $this->pekerjaan,
             'alamat_ktp' => $this->alamat_ktp,
             'alamat_domisili' => $this->alamat_domisili,
             'tipe_kamar' => $this->tipe_kamar,
-            'jumlah_orang' => $this->jumlah_orang,
             'tanggal_masuk' => $this->tanggal_masuk,
             'status_sewa' => $this->status_sewa,
             'catatan' => $this->catatan,
@@ -255,7 +240,6 @@ class PenyewaManager extends BaseTableManager
                 'keluar' => 'Keluar'
             ],
             'jenisKelaminOptions' => [
-                'laki-laki' => 'Laki-laki',
                 'perempuan' => 'Perempuan'
             ]
         ];

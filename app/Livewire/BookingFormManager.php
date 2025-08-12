@@ -15,12 +15,10 @@ class BookingFormManager extends BaseTableManager
     public $nama_lengkap;
     public $email;
     public $nomor_hp;
-    public $jenis_kelamin;
     public $pekerjaan;
     public $alamat_ktp;
     public $alamat_domisili;
     public $tipe_kamar;
-    public $jumlah_orang;
     public $tanggal_masuk;
     public $status_booking;
     public $catatan;
@@ -84,12 +82,10 @@ class BookingFormManager extends BaseTableManager
         $this->nama_lengkap = '';
         $this->email = '';
         $this->nomor_hp = '';
-        $this->jenis_kelamin = '';
         $this->pekerjaan = '';
         $this->alamat_ktp = '';
         $this->alamat_domisili = '';
         $this->tipe_kamar = '';
-        $this->jumlah_orang = 1;
         $this->tanggal_masuk = '';
         $this->status_booking = 'pending';
         $this->catatan = '';
@@ -100,12 +96,10 @@ class BookingFormManager extends BaseTableManager
         $this->nama_lengkap = $record->nama_lengkap;
         $this->email = $record->email;
         $this->nomor_hp = $record->nomor_hp;
-        $this->jenis_kelamin = $record->jenis_kelamin;
         $this->pekerjaan = $record->pekerjaan;
         $this->alamat_ktp = $record->alamat_ktp;
         $this->alamat_domisili = $record->alamat_domisili;
         $this->tipe_kamar = $record->tipe_kamar;
-        $this->jumlah_orang = $record->jumlah_orang;
         $this->tanggal_masuk = $record->tanggal_masuk;
         $this->status_booking = $record->status_booking;
         $this->catatan = $record->catatan;
@@ -117,12 +111,10 @@ class BookingFormManager extends BaseTableManager
             'nama_lengkap' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'nomor_hp' => 'required|string|max:20',
-            'jenis_kelamin' => 'required|in:laki-laki,perempuan',
             'pekerjaan' => 'required|string|max:255',
             'alamat_ktp' => 'required|string',
             'alamat_domisili' => 'required|string',
             'tipe_kamar' => 'required|in:deluxe,premium',
-            'jumlah_orang' => 'required|integer|min:1|max:10',
             'tanggal_masuk' => 'required|date|after_or_equal:today',
             'status_booking' => 'required|in:pending,approved,rejected,cancelled',
             'catatan' => 'nullable|string',
@@ -135,12 +127,10 @@ class BookingFormManager extends BaseTableManager
             'nama_lengkap' => $this->nama_lengkap,
             'email' => $this->email,
             'nomor_hp' => $this->nomor_hp,
-            'jenis_kelamin' => $this->jenis_kelamin,
             'pekerjaan' => $this->pekerjaan,
             'alamat_ktp' => $this->alamat_ktp,
             'alamat_domisili' => $this->alamat_domisili,
             'tipe_kamar' => $this->tipe_kamar,
-            'jumlah_orang' => $this->jumlah_orang,
             'tanggal_masuk' => $this->tanggal_masuk,
             'status_booking' => $this->status_booking,
             'catatan' => $this->catatan,
@@ -161,12 +151,10 @@ class BookingFormManager extends BaseTableManager
             'nama_lengkap' => $this->nama_lengkap,
             'email' => $this->email,
             'nomor_hp' => $this->nomor_hp,
-            'jenis_kelamin' => $this->jenis_kelamin,
             'pekerjaan' => $this->pekerjaan,
             'alamat_ktp' => $this->alamat_ktp,
             'alamat_domisili' => $this->alamat_domisili,
             'tipe_kamar' => $this->tipe_kamar,
-            'jumlah_orang' => $this->jumlah_orang,
             'tanggal_masuk' => $this->tanggal_masuk,
             'status_booking' => $this->status_booking,
             'catatan' => $this->catatan,
@@ -188,12 +176,10 @@ class BookingFormManager extends BaseTableManager
             'nama_lengkap'    => $booking->nama_lengkap,
             'email'           => $booking->email,
             'nomor_hp'        => $booking->nomor_hp,
-            'jenis_kelamin'   => $booking->jenis_kelamin,
             'pekerjaan'       => $booking->pekerjaan,
             'alamat_ktp'      => $booking->alamat_ktp,
             'alamat_domisili' => $booking->alamat_domisili,
             'tipe_kamar'      => $booking->tipe_kamar,
-            'jumlah_orang'    => $booking->jumlah_orang,
             'tanggal_masuk'   => $booking->tanggal_masuk,
             'status_sewa'     => 'aktif',
             'catatan'         => $booking->catatan,
@@ -242,7 +228,6 @@ class BookingFormManager extends BaseTableManager
                 'cancelled' => 'Cancelled'
             ],
             'jenisKelaminOptions' => [
-                'laki-laki' => 'Laki-laki',
                 'perempuan' => 'Perempuan'
             ],
             'tipeKamarOptions' => [

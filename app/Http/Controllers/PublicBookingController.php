@@ -33,7 +33,7 @@ class PublicBookingController extends Controller
             'nama_lengkap' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'nomor_hp' => 'required|string|max:20',
-            'jenis_kelamin' => 'required|in:laki-laki,perempuan',
+            'jenis_kelamin' => 'required|in:perempuan',
             'pekerjaan' => 'required|string|max:255',
             'alamat_ktp' => 'required|string',
             'alamat_domisili' => 'required|string',

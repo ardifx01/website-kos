@@ -63,7 +63,6 @@
                         <select id="jenis_kelamin" name="jenis_kelamin" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200">
                             <option value="">Pilih Jenis Kelamin</option>
-                            <option value="laki-laki">Laki-laki</option>
                             <option value="perempuan">Perempuan</option>
                         </select>
                         <div class="error-message text-red-500 text-sm mt-1 hidden"></div>

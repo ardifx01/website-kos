@@ -10,7 +10,7 @@
 
     // Additional filters content
     $additionalFilters = '
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
         <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filter Status</label>
             <select wire:model.live="statusFilter" 
@@ -52,7 +52,7 @@
     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Kontak</th>
     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
         <button wire:click="sortBy(\'tipe_kamar\')" class="flex items-center space-x-1 hover:text-gray-700 dark:hover:text-gray-100">
-            <span>Kamar</span>
+            <span>Tipe Kamar</span>
             ' . ($sortField === 'tipe_kamar' ? '
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     ' . ($sortDirection === 'asc' ? 
@@ -138,7 +138,6 @@
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm text-gray-900 dark:text-white">' . ucfirst(str_replace('_', ' ', $booking->tipe_kamar)) . '</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400">' . $booking->jumlah_orang . ' orang</div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
             ' . date('d/m/Y', strtotime($booking->tanggal_masuk)) . '
@@ -188,20 +187,7 @@
             </div>
 
             <!-- Jenis Kelamin -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jenis Kelamin <span class="text-red-500">*</span></label>
-                <select wire:model="jenis_kelamin" ' . ($this->modalMode === 'view' ? 'disabled' : '') . '
-                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ' . ($this->modalMode === 'view' ? 'bg-gray-50 dark:bg-gray-600' : '') . '">
-                    <option value="">Pilih Jenis Kelamin</option>';
-    
-    foreach($jenisKelaminOptions as $key => $value) {
-        $modalContent .= '<option value="' . $key . '">' . $value . '</option>';
-    }
-    
-    $modalContent .= '
-                </select>
-                ' . ($this->getErrorBag()->has('jenis_kelamin') ? '<span class="text-red-500 text-xs">' . $this->getErrorBag()->first('jenis_kelamin') . '</span>' : '') . '
-            </div>
+            
 
             <!-- Pekerjaan -->
             <div>
@@ -244,12 +230,7 @@
             </div>
 
             <!-- Jumlah Orang -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jumlah Orang <span class="text-red-500">*</span></label>
-                <input type="number" wire:model="jumlah_orang" min="1" max="10" ' . ($this->modalMode === 'view' ? 'readonly' : '') . '
-                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ' . ($this->modalMode === 'view' ? 'bg-gray-50 dark:bg-gray-600' : '') . '">
-                ' . ($this->getErrorBag()->has('jumlah_orang') ? '<span class="text-red-500 text-xs">' . $this->getErrorBag()->first('jumlah_orang') . '</span>' : '') . '
-            </div>
+            
 
             <!-- Tanggal Masuk -->
             <div>

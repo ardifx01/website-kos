@@ -10,7 +10,7 @@
 
     // Additional filters content
     $additionalFilters = '
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filter Status</label>
             <select wire:model.live="statusFilter" 
@@ -145,7 +145,6 @@
         </td>
         <td class="px-6 py-4">
             <div class="text-sm font-medium text-gray-900 dark:text-white">' . \Illuminate\Support\Str::limit($complaint->subjek, 30) . '</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400">' . \Illuminate\Support\Str::limit($complaint->deskripsi, 40) . '</div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">

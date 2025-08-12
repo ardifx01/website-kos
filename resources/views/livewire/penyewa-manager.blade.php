@@ -10,7 +10,7 @@
 
     // Additional filters content
     $additionalFilters = '
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filter Status</label>
             <select wire:model.live="statusFilter" 
@@ -37,19 +37,6 @@
     $additionalFilters .= '
             </select>
         </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filter Jenis Kelamin</label>
-            <select wire:model.live="jenisKelaminFilter" 
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
-                <option value="">Semua Jenis Kelamin</option>';
-    
-    foreach($jenisKelaminOptions as $value => $label) {
-        $additionalFilters .= '<option value="' . $value . '">' . $label . '</option>';
-    }
-    
-    $additionalFilters .= '
-            </select>
-        </div>
     </div>';
 
     // Table headers
@@ -67,7 +54,7 @@
         </button>
     </th>
     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Kontak</th>
-    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Kamar</th>
+    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tipe Kamar</th>
     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
         <button wire:click="sortBy(\'tanggal_masuk\')" class="flex items-center space-x-1 hover:text-gray-700 dark:hover:text-gray-100">
@@ -123,7 +110,7 @@
                 </div>
                 <div class="ml-4">
                     <div class="text-sm font-medium text-gray-900 dark:text-white">' . $penyewa->nama_lengkap . '</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">' . ucfirst($penyewa->jenis_kelamin) . ' • ' . $penyewa->pekerjaan . '</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">' . $penyewa->pekerjaan . '</div>
                 </div>
             </div>
         </td>
@@ -136,7 +123,6 @@
                 ($tipeKamarColors[$penyewa->tipe_kamar] ?? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200') . '">
                 ' . ucfirst($penyewa->tipe_kamar) . '
             </span>
-            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">' . $penyewa->jumlah_orang . ' orang</div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ' . 

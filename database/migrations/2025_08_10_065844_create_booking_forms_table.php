@@ -14,14 +14,12 @@ return new class extends Migration
             $table->string('nama_lengkap');
             $table->string('email')->nullable();
             $table->string('nomor_hp')->nullable();
-            $table->string('jenis_kelamin')->nullable(); // Laki-laki / Perempuan
             $table->string('pekerjaan')->nullable();
             $table->string('alamat_ktp')->nullable();
             $table->string('alamat_domisili')->nullable();
 
             // Info Booking
             $table->string('tipe_kamar')->nullable();
-            $table->integer('jumlah_orang')->default(1);
             $table->date('tanggal_masuk'); // perubahan dari tanggal_mulai
             $table->string('status_booking')->default('pending'); // pending, approved, rejected
             $table->text('catatan')->nullable();
