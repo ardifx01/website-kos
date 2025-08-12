@@ -2,45 +2,45 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class FasilitasKamar extends Model
+class TipeKamar extends Model
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
-    protected $table = 'fasilitas_kamar';
+    protected $table = 'tipe_kamar';
+
     protected $primaryKey = 'id';
-    public $incrementing = true;
-    protected $keyType = 'int';
 
     protected $fillable = [
-        'idKamar',
-        'namaFasilitas',
-        'kondisi',
+        'nama',        // nama tipe kamar, misal 'Deluxe', 'Premium', dll
+        'deskripsi',   // deskripsi fasilitas / info tipe kamar
+        'hargaSewa',
         'created_by',
         'updated_by',
         'deleted_by',
     ];
 
-    // Relasi ke Kamar
-    public function kamar()
+    // Relasi ke kamar: satu tipe kamar punya banyak kamar
+    public function kamars()
     {
-        return $this->belongsTo(Kamar::class, 'idKamar', 'id');
+        return $this->hasMany(Kamar::class, 'tipe_kamar_id', 'id');
     }
 
-    // Audit trail
+    // Relasi ke user pembuat
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    // Relasi ke user updater
     public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    // Relasi ke user deleter
     public function deleter()
     {
         return $this->belongsTo(User::class, 'deleted_by');

@@ -1,212 +1,210 @@
 @php
     // Data untuk base table
     $pageTitle = 'Manajemen Kamar';
-    $pageDescription = 'Kelola data kamar kost';
-    $searchPlaceholder = 'Cari nomor kamar, tipe, harga, atau status...';
+    $pageDescription = 'Kelola data kamar hotel';
+    $searchPlaceholder = 'Cari nomor kamar atau tipe kamar...';
     $createButtonText = 'Tambah Kamar';
     $emptyStateTitle = 'Tidak ada kamar';
     $emptyStateDescription = 'Belum ada kamar yang terdaftar atau sesuai dengan pencarian Anda.';
-    $tableColspan = 6;
+    $tableColspan = 7;
 
     // Additional filters content
-    $additionalFilters = '
+    $additionalFilters = <<<HTML
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filter Status</label>
             <select wire:model.live="statusFilter" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
-                <option value="">Semua Status</option>';
-    
-    foreach($statusOptions as $key => $label) {
-        $additionalFilters .= '<option value="' . $key . '">' . $label . '</option>';
+                <option value="">Semua Status</option>
+HTML;
+    foreach($statusOptions as $value => $label) {
+        $additionalFilters .= "<option value=\"{$value}\">{$label}</option>";
     }
-    
-    $additionalFilters .= '
+
+    $additionalFilters .= <<<HTML
             </select>
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filter Tipe</label>
-            <select wire:model.live="tipeFilter" 
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipe Kamar</label>
+            <select wire:model.live="tipeKamarFilter" 
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
-                <option value="">Semua Tipe</option>';
-    
-    foreach($tipeOptions as $key => $label) {
-        $additionalFilters .= '<option value="' . $key . '">' . $label . '</option>';
+                <option value="">Semua Tipe</option>
+HTML;
+    foreach($tipeKamars as $tipeKamar) {
+        $additionalFilters .= "<option value=\"{$tipeKamar->id}\">{$tipeKamar->nama}</option>";
     }
-    
-    $additionalFilters .= '
+
+    $additionalFilters .= <<<HTML
             </select>
         </div>
-    </div>';
+    </div>
+HTML;
 
     // Table headers
-    $tableHeaders = '
+    $iconAsc = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>';
+    $iconDesc = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>';
+
+    $tableHeaders = <<<HTML
     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-        <button wire:click="sortBy(\'nomorKamar\')" class="flex items-center space-x-1 hover:text-gray-700 dark:hover:text-gray-100">
-            <span>Nomor Kamar</span>
-            ' . ($sortField === 'nomorKamar' ? '
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    ' . ($sortDirection === 'asc' ? 
-                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>' :
-                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>') . '
-                </svg>
-            ' : '') . '
+        <button wire:click="sortBy('nomorKamar')" class="flex items-center space-x-1 hover:text-gray-700 dark:hover:text-gray-100">
+            <span>No. Kamar</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {$iconAsc}
+            </svg>
+        </button>
+    </th>
+    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tipe Kamar</th>
+    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Harga Sewa</th>
+    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+        <button wire:click="sortBy('status')" class="flex items-center space-x-1 hover:text-gray-700 dark:hover:text-gray-100">
+            <span>Status</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {$iconDesc}
+            </svg>
         </button>
     </th>
     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-        <button wire:click="sortBy(\'tipeKamar\')" class="flex items-center space-x-1 hover:text-gray-700 dark:hover:text-gray-100">
-            <span>Tipe Kamar</span>
-            ' . ($sortField === 'tipeKamar' ? '
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    ' . ($sortDirection === 'asc' ? 
-                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>' :
-                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>') . '
-                </svg>
-            ' : '') . '
-        </button>
-    </th>
-    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-        <button wire:click="sortBy(\'hargaSewa\')" class="flex items-center space-x-1 hover:text-gray-700 dark:hover:text-gray-100">
-            <span>Harga Sewa</span>
-            ' . ($sortField === 'hargaSewa' ? '
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    ' . ($sortDirection === 'asc' ? 
-                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>' :
-                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>') . '
-                </svg>
-            ' : '') . '
-        </button>
-    </th>
-    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-        <button wire:click="sortBy(\'created_at\')" class="flex items-center space-x-1 hover:text-gray-700 dark:hover:text-gray-100">
+        <button wire:click="sortBy('created_at')" class="flex items-center space-x-1 hover:text-gray-700 dark:hover:text-gray-100">
             <span>Dibuat</span>
-            ' . ($sortField === 'created_at' ? '
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    ' . ($sortDirection === 'asc' ? 
-                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>' :
-                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>') . '
-                </svg>
-            ' : '') . '
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {$iconAsc}
+            </svg>
         </button>
-    </th>';
+    </th>
+HTML;
 
     // Table row function
-    $tableRow = function($kamar) {
-        return '
+    $tableRow = function($kamar) use ($statusOptions) {
+        $statusBadgeClass = match($kamar->status ?? '') {
+            'tersedia' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+            'terisi' => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+            'maintenance' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+            'renovasi' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+            default => 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+        };
+
+        $tipeKamarNama = $kamar->tipeKamar->nama ?? 'Tidak ada tipe';
+        $tipeKamarDeskripsi = strlen($kamar->tipeKamar->deskripsi ?? '') > 50
+            ? substr($kamar->tipeKamar->deskripsi, 0, 50) . '...'
+            : ($kamar->tipeKamar->deskripsi ?? 'Tidak ada deskripsi');
+        $hargaSewa = 'Rp ' . number_format($kamar->tipeKamar->hargaSewa ?? 0, 0, ',', '.');
+        $statusLabel = $statusOptions[$kamar->status] ?? $kamar->status;
+        $creatorName = $kamar->creator->name ?? 'System';
+
+        return <<<HTML
         <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center">
                 <div class="flex-shrink-0 h-10 w-10">
-                    <div class="h-10 w-10 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                        <span class="text-sm font-bold text-white">' . substr($kamar->nomorKamar, 0, 3) . '</span>
+                    <div class="h-10 w-10 rounded-lg bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
                     </div>
                 </div>
                 <div class="ml-4">
-                    <div class="text-sm font-medium text-gray-900 dark:text-white">' . $kamar->nomorKamar . '</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Kamar ' . $kamar->nomorKamar . '</div>
+                    <div class="text-lg font-bold text-gray-900 dark:text-white">{$kamar->nomorKamar}</div>
                 </div>
             </div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
-            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ' . $this->getTipeBadgeClass($kamar->tipeKamar) . '">
-                ' . ($this->tipeOptions[$kamar->tipeKamar] ?? $kamar->tipeKamar) . '
-            </span>
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-            ' . $this->formatHarga($kamar->hargaSewa) . '
+            <div class="text-sm font-medium text-gray-900 dark:text-white">{$tipeKamarNama}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">{$tipeKamarDeskripsi}</div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
-            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ' . $this->getStatusBadgeClass($kamar->status) . '">
-                ' . ($this->statusOptions[$kamar->status] ?? $kamar->status) . '
-            </span>
+            <div class="text-sm font-semibold text-green-600 dark:text-green-400">{$hargaSewa}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">per bulan</div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {$statusBadgeClass}">{$statusLabel}</span>
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-            ' . $kamar->created_at->format('d/m/Y') . '
-        </td>';
+            <div>{$kamar->created_at->format('d/m/Y')}</div>
+            <div class="text-xs">{$creatorName}</div>
+        </td>
+HTML;
     };
 
     // Modal content
-    $modalContent = '
+    $modalContent = <<<HTML
     <form wire:submit.prevent="save">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Nomor Kamar -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nomor Kamar <span class="text-red-500">*</span></label>
-                <input type="text" wire:model="nomorKamar" ' . ($this->modalMode === 'view' ? 'readonly' : '') . '
-                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ' . ($this->modalMode === 'view' ? 'bg-gray-50 dark:bg-gray-600' : '') . '"
-                       placeholder="Contoh: A001">
-                ' . ($this->getErrorBag()->has('nomorKamar') ? '<span class="text-red-500 text-xs">' . $this->getErrorBag()->first('nomorKamar') . '</span>' : '') . '
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Nomor Kamar <span class="text-red-500">*</span>
+                </label>
+                <input type="text" wire:model="nomorKamar" placeholder="Contoh: 101, A-202"
+                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
             </div>
 
             <!-- Tipe Kamar -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipe Kamar <span class="text-red-500">*</span></label>
-                <select wire:model="tipeKamar" ' . ($this->modalMode === 'view' ? 'disabled' : '') . '
-                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ' . ($this->modalMode === 'view' ? 'bg-gray-50 dark:bg-gray-600' : '') . '">
-                    <option value="">Pilih Tipe Kamar</option>';
-    
-    foreach($tipeOptions as $key => $label) {
-        $modalContent .= '<option value="' . $key . '">' . $label . '</option>';
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Tipe Kamar <span class="text-red-500">*</span>
+                </label>
+                <select wire:model="tipe_kamar_id" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                    <option value="">Pilih Tipe Kamar</option>
+HTML;
+    foreach($tipeKamars as $tipeKamar) {
+        $hargaFormatted = 'Rp ' . number_format($tipeKamar->hargaSewa, 0, ',', '.');
+        $modalContent .= "<option value=\"{$tipeKamar->id}\">{$tipeKamar->nama} - {$hargaFormatted}</option>";
     }
-    
-    $modalContent .= '
-                </select>
-                ' . ($this->getErrorBag()->has('tipeKamar') ? '<span class="text-red-500 text-xs">' . $this->getErrorBag()->first('tipeKamar') . '</span>' : '') . '
-            </div>
 
-            <!-- Harga Sewa -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Harga Sewa <span class="text-red-500">*</span></label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
-                    </div>
-                    <input type="number" wire:model="hargaSewa" ' . ($this->modalMode === 'view' ? 'readonly' : '') . '
-                           class="w-full pl-12 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ' . ($this->modalMode === 'view' ? 'bg-gray-50 dark:bg-gray-600' : '') . '"
-                           placeholder="0" min="0">
-                </div>
-                ' . ($this->getErrorBag()->has('hargaSewa') ? '<span class="text-red-500 text-xs">' . $this->getErrorBag()->first('hargaSewa') . '</span>' : '') . '
+    $modalContent .= <<<HTML
+                </select>
             </div>
 
             <!-- Status -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status <span class="text-red-500">*</span></label>
-                <select wire:model="status" ' . ($this->modalMode === 'view' ? 'disabled' : '') . '
-                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ' . ($this->modalMode === 'view' ? 'bg-gray-50 dark:bg-gray-600' : '') . '">
-                    <option value="">Pilih Status</option>';
-    
-    foreach($statusOptions as $key => $label) {
-        $modalContent .= '<option value="' . $key . '">' . $label . '</option>';
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Status <span class="text-red-500">*</span>
+                </label>
+                <select wire:model="status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                    <option value="">Pilih Status</option>
+HTML;
+    foreach($statusOptions as $value => $label) {
+        $modalContent .= "<option value=\"{$value}\">{$label}</option>";
     }
-    
-    $modalContent .= '
+
+    $modalContent .= <<<HTML
                 </select>
-                ' . ($this->getErrorBag()->has('status') ? '<span class="text-red-500 text-xs">' . $this->getErrorBag()->first('status') . '</span>' : '') . '
             </div>
 
             <!-- Info Tambahan untuk View Mode -->
-            ' . ($this->modalMode === 'view' && isset($this->recordId) && $this->recordId ? '
-            <div class="md:col-span-2">
-                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Informasi Tambahan</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <span class="text-gray-500 dark:text-gray-400">Dibuat:</span>
-                            <span class="text-gray-900 dark:text-white ml-2">' . (isset($records) && $records->firstWhere('idKamar', $this->recordId) ? $records->firstWhere('idKamar', $this->recordId)->created_at->format('d/m/Y H:i') : '-') . '</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-500 dark:text-gray-400">Terakhir Diupdate:</span>
-                            <span class="text-gray-900 dark:text-white ml-2">' . (isset($records) && $records->firstWhere('idKamar', $this->recordId) ? $records->firstWhere('idKamar', $this->recordId)->updated_at->format('d/m/Y H:i') : '-') . '</span>
-                        </div>
+HTML;
+
+    if ($this->modalMode === 'view' && $this->recordId) {
+        $selectedTipeKamar = $tipeKamars->firstWhere('id', $this->tipe_kamar_id);
+        $hargaFormatted = $selectedTipeKamar ? 'Rp ' . number_format($selectedTipeKamar->hargaSewa, 0, ',', '.') : 'Rp 0';
+        $deskripsi = $selectedTipeKamar->deskripsi ?? 'Tidak ada deskripsi';
+
+        $modalContent .= <<<HTML
+            <div class="md:col-span-2 border-t border-gray-200 dark:border-gray-600 pt-4">
+                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Informasi Detail</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-500 dark:text-gray-400">ID Kamar:</span>
+                        <span class="ml-2 font-medium text-gray-900 dark:text-white">{$this->recordId}</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500 dark:text-gray-400">Harga Sewa:</span>
+                        <span class="ml-2 font-medium text-green-600 dark:text-green-400">{$hargaFormatted}</span>
+                    </div>
+                    <div class="md:col-span-2">
+                        <span class="text-gray-500 dark:text-gray-400">Deskripsi Tipe:</span>
+                        <div class="mt-1 text-gray-900 dark:text-white">{$deskripsi}</div>
                     </div>
                 </div>
             </div>
-            ' : '') . '
+HTML;
+    }
+
+    $modalContent .= <<<HTML
         </div>
-    </form>';
+    </form>
+HTML;
 @endphp
 
-{{-- Include base table with all configurations --}}
 @include('livewire.base.base-table-manager', [
     'pageTitle' => $pageTitle,
     'pageDescription' => $pageDescription,

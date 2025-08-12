@@ -109,23 +109,23 @@
                         Dashboard
                     </flux:navlist.item>
                 <flux:navlist.group heading="Data & Transaksi" expandable>
-                    <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('penyewa.*')" wire:navigate>
+                    <flux:navlist.item :href="route('penyewa-manager.index')" :current="request()->routeIs('penyewa-manager.*')" wire:navigate>
                         Penyewa
                     </flux:navlist.item>
                     <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('pembayaran.*')" wire:navigate>
                         Pembayaran
                     </flux:navlist.item>
-                    <!-- <flux:navlist.item :href="route('form-komplain.index')" :current="request()->routeIs('form-komplain.*')" wire:navigate>
-                        Pengingat Komplain
-                    </flux:navlist.item> -->
+                    <flux:navlist.item :href="route('booking-form-manager.index')" :current="request()->routeIs('booking-form-manager.*')" wire:navigate>
+                        Booking
+                    </flux:navlist.item>
                     <flux:navlist.item :href="route('complaint-manager.index')" :current="request()->routeIs('complaint-manager.*')" wire:navigate>
                         Komplain
                     </flux:navlist.item>
                     <flux:navlist.item :href="route('kamar-manager.index')" :current="request()->routeIs('kamar-manager.*')" wire:navigate>
                         Kamar
                     </flux:navlist.item>
-                    <flux:navlist.item :href="route('fasilitas-kamar-manager.index')" :current="request()->routeIs('fasilitas-kamar-manager-kamar.*')" wire:navigate>
-                        Fasilitas Kamar
+                    <flux:navlist.item :href="route('tipe-kamar-manager.index')" :current="request()->routeIs('tipe-kamar-manager.*')" wire:navigate>
+                        Tipe Kamar
                     </flux:navlist.item>
                 </flux:navlist.group>
 
@@ -141,7 +141,7 @@
                     </flux:navlist.item>
                 </flux:navlist.group>
 
-                <flux:navlist.group heading="Laporan & Ekspor" expandable>
+                <!-- <flux:navlist.group heading="Laporan & Ekspor" expandable>
                     <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('laporan-keuangan.*')" wire:navigate>
                         Keuangan Bulanan
                     </flux:navlist.item>
@@ -154,7 +154,7 @@
                     <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('export.*')" wire:navigate>
                         Export PDF/Excel
                     </flux:navlist.item>
-                </flux:navlist.group>
+                </flux:navlist.group> -->
 
 
             </flux:navlist>

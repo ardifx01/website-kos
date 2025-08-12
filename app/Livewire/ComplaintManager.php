@@ -1,18 +1,16 @@
 <?php
-// app/Livewire/ComplaintManager.php
 
 namespace App\Livewire;
 
 use App\Models\ComplaintForm;
+use App\Models\User;
 use App\Livewire\Base\BaseTableManager;
-use App\Services\ComplaintTokenService;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class ComplaintManager extends BaseTableManager
 {
-    // Properties from base ComplaintManager
+    // Properties specific to ComplaintForm model
     public $nama_lengkap;
     public $email;
     public $nomor_hp;
@@ -21,35 +19,17 @@ class ComplaintManager extends BaseTableManager
     public $kategori;
     public $deskripsi;
     public $status_komplain;
+    public $token_used;
+    public $admin_response;
+    public $responded_at;
+    public $responded_by;
+    public $showLinkModal = false;
+    public $generatedLink = '';
+    public $complaintForm; // Assuming you have a complaint form model
     
-    // Filter properties
+    // Filters
     public $statusFilter = '';
     public $kategoriFilter = '';
-
-    // Status options
-    public $statusOptions = [
-        'Pending' => 'Pending',
-        'In Progress' => 'In Progress', 
-        'Resolved' => 'Resolved',
-        'Closed' => 'Closed',
-    ];
-
-    // Category options
-    public $kategoriOptions = [
-        'Fasilitas Kamar' => 'Fasilitas Kamar',
-        'Kebersihan' => 'Kebersihan',
-        'Pelayanan Staff' => 'Pelayanan Staff',
-        'Makanan & Minuman' => 'Makanan & Minuman',
-        'Fasilitas Umum' => 'Fasilitas Umum',
-        'Reservasi' => 'Reservasi',
-        'Billing & Pembayaran' => 'Billing & Pembayaran',
-        'Lainnya' => 'Lainnya',
-    ];
-    
-    // Token generation properties
-    public $generatedLinks = [];
-    public $showLinkModal = false;
-    public $currentGeneratedLink = null;
 
     // Add filters to query string
     protected $queryString = [
@@ -63,7 +43,7 @@ class ComplaintManager extends BaseTableManager
     public function mount()
     {
         parent::mount();
-        $this->sortField = 'created_at'; // Default sort by newest
+        $this->sortField = 'created_at'; // Override default sort field
         $this->sortDirection = 'desc';
     }
 
@@ -89,7 +69,7 @@ class ComplaintManager extends BaseTableManager
 
     protected function getRecords()
     {
-        return ComplaintForm::query()
+        return ComplaintForm::with(['creator', 'updater', 'respondedBy'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('nama_lengkap', 'like', '%' . $this->search . '%')
@@ -100,10 +80,10 @@ class ComplaintManager extends BaseTableManager
                 });
             })
             ->when($this->statusFilter, function ($query) {
-                $query->where('status_komplain', $this->statusFilter);
+                $query->byStatus($this->statusFilter);
             })
             ->when($this->kategoriFilter, function ($query) {
-                $query->where('kategori', $this->kategoriFilter);
+                $query->byKategori($this->kategoriFilter);
             })
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
@@ -119,7 +99,11 @@ class ComplaintManager extends BaseTableManager
         $this->subjek = '';
         $this->kategori = '';
         $this->deskripsi = '';
-        $this->status_komplain = 'Pending';
+        $this->status_komplain = 'Open';
+        $this->token_used = '';
+        $this->admin_response = '';
+        $this->responded_at = null;
+        $this->responded_by = null;
     }
 
     protected function loadRecordData($record): void
@@ -132,177 +116,160 @@ class ComplaintManager extends BaseTableManager
         $this->kategori = $record->kategori;
         $this->deskripsi = $record->deskripsi;
         $this->status_komplain = $record->status_komplain;
+        $this->token_used = $record->token_used;
+        $this->admin_response = $record->admin_response;
+        $this->responded_at = $record->responded_at?->format('Y-m-d\TH:i');
+        $this->responded_by = $record->responded_by;
     }
 
     protected function getValidationRules(): array
     {
-        return [
-            'status_komplain' => 'required|in:Pending,In Progress,Resolved,Closed',
+        $rules = [
+            'nama_lengkap' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'nomor_hp' => 'required|string|max:20',
+            'tipe_kamar' => 'required|in:' . implode(',', array_keys(ComplaintForm::getTipeKamarOptions())),
+            'subjek' => 'required|string|max:255',
+            'kategori' => 'required|in:' . implode(',', array_keys(ComplaintForm::getKategoriOptions())),
+            'deskripsi' => 'required|string',
+            'status_komplain' => 'required|in:' . implode(',', array_keys(ComplaintForm::getStatusOptions())),
+            'admin_response' => 'nullable|string',
+            'responded_at' => 'nullable|date',
+            'responded_by' => 'nullable|exists:users,id',
         ];
+
+        return $rules;
     }
 
     protected function store(): ?Model
     {
-        // This method typically won't be used for complaints
-        // as they are created through the public form
-        return null;
+        $data = [
+            'nama_lengkap' => $this->nama_lengkap,
+            'email' => $this->email,
+            'nomor_hp' => $this->nomor_hp,
+            'tipe_kamar' => $this->tipe_kamar,
+            'subjek' => $this->subjek,
+            'kategori' => $this->kategori,
+            'deskripsi' => $this->deskripsi,
+            'status_komplain' => $this->status_komplain,
+            'admin_response' => $this->admin_response,
+            'responded_at' => $this->responded_at ? now() : null,
+            'responded_by' => $this->admin_response ? auth()->id() : null,
+        ];
+
+        $complaint = ComplaintForm::create($data);
+
+        // Return the created record for global logging
+        return $complaint;
     }
 
     protected function update(): ?Model
     {
         $complaint = ComplaintForm::findOrFail($this->recordId);
         
-        $complaint->update([
+        $data = [
+            'nama_lengkap' => $this->nama_lengkap,
+            'email' => $this->email,
+            'nomor_hp' => $this->nomor_hp,
+            'tipe_kamar' => $this->tipe_kamar,
+            'subjek' => $this->subjek,
+            'kategori' => $this->kategori,
+            'deskripsi' => $this->deskripsi,
             'status_komplain' => $this->status_komplain,
-            'updated_by' => auth()->id(),
-        ]);
+            'admin_response' => $this->admin_response,
+        ];
 
+        // Update response info if admin_response is provided
+        if ($this->admin_response && !$complaint->admin_response) {
+            $data['responded_at'] = now();
+            $data['responded_by'] = auth()->id();
+        }
+
+        $complaint->update($data);
+
+        // Return the updated record for global logging
         return $complaint;
     }
 
-    public function updateStatus($id, $status)
+    public function generatePublicLink()
     {
-        $complaint = ComplaintForm::findOrFail($id);
-        $complaint->update([
-            'status_komplain' => $status,
-            'updated_by' => auth()->id(),
+        $token = Str::random(32);
+        $publicUrl = route('public.complaint-form', ['token' => $token]);
+        
+        // Store token in cache for validation (expires in 24 hours)
+        cache()->put("complaint_token_{$token}", true, now()->addHours(24));
+        
+        // Copy to clipboard using browser API
+        $this->dispatch('copy-to-clipboard', text: $publicUrl);
+        $this->dispatch('show-alert', [
+            'type' => 'success',
+            'message' => 'Link complaint form berhasil dibuat dan disalin ke clipboard!'
+        ]);
+    }
+
+    public function respondToComplaint()
+    {
+        $this->validate([
+            'admin_response' => 'required|string|min:10',
+            'status_komplain' => 'required|in:In Progress,Resolved,Closed'
         ]);
 
-        $this->dispatch('refresh-table');
-        $this->dispatch('success', 'Status complaint berhasil diupdate!');
+        $complaint = ComplaintForm::findOrFail($this->recordId);
+        
+        $complaint->update([
+            'admin_response' => $this->admin_response,
+            'status_komplain' => $this->status_komplain,
+            'responded_at' => now(),
+            'responded_by' => auth()->id(),
+        ]);
+
+        $this->dispatch('show-alert', [
+            'type' => 'success',
+            'message' => 'Response berhasil dikirim!'
+        ]);
+
+        $this->closeModal();
+        $this->resetForm();
     }
 
-    protected function cannotDelete($record): bool
+    protected function getAdditionalViewData(): array
     {
-        // Only allow deletion of resolved or closed complaints
-        return !in_array($record->status_komplain, ['Resolved', 'Closed']);
-    }
-    
-    protected function getCannotDeleteMessage($record): string
-    {
-        return 'Hanya complaint dengan status Resolved atau Closed yang dapat dihapus!';
-    }
-
-    // Override to disable create functionality
-    public function create()
-    {
-        $this->dispatch('info', 'Complaint dibuat melalui form publik, bukan melalui admin panel.');
+        return [
+            'statusOptions' => ComplaintForm::getStatusOptions(),
+            'kategoriOptions' => ComplaintForm::getKategoriOptions(),
+            'tipeKamarOptions' => ComplaintForm::getTipeKamarOptions(),
+            'users' => User::all(),
+        ];
     }
 
     // Override titles and messages
+    protected function getCreateTitle(): string
+    {
+        return 'Tambah Complaint Baru';
+    }
+
     protected function getEditTitle($record): string
     {
-        return 'Update Status Complaint: ' . $record->subjek;
+        return 'Edit Complaint: ' . Str::limit($record->subjek, 30);
     }
 
     protected function getViewTitle($record): string
     {
-        return 'Detail Complaint: ' . $record->subjek;
+        return 'Detail Complaint: ' . Str::limit($record->subjek, 30);
+    }
+
+    protected function getCreateSuccessMessage(): string
+    {
+        return 'Complaint berhasil ditambahkan!';
     }
 
     protected function getUpdateSuccessMessage(): string
     {
-        return 'Status complaint berhasil diupdate!';
+        return 'Complaint berhasil diupdate!';
     }
 
     protected function getDeleteSuccessMessage(): string
     {
         return 'Complaint berhasil dihapus!';
-    }
-
-    public function getStatusBadgeClass($status)
-    {
-        return match($status) {
-            'Pending' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-            'In Progress' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-            'Resolved' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-            'Closed' => 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
-            default => 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
-        };
-    }
-    
-    /**
-     * Generate general complaint form link
-     */
-    public function generateComplaintLink()
-    {
-        try {
-            $linkData = ComplaintTokenService::generateToken('general', 168); // 7 days
-            
-            $this->currentGeneratedLink = $linkData;
-            $this->generatedLinks[] = $linkData;
-            $this->showLinkModal = true;
-            
-            $this->dispatch('link-generated', $linkData);
-            session()->flash('success', 'Link komplain berhasil dibuat!');
-            
-        } catch (\Exception $e) {
-            Log::error('Failed to generate complaint link: ' . $e->getMessage());
-            session()->flash('error', 'Gagal membuat link komplain.');
-        }
-    }
-    
-    /**
-     * Generate QR Code link
-     */
-    public function generateQRLink()
-    {
-        try {
-            $linkData = ComplaintTokenService::generateQRCodeToken();
-            
-            $this->currentGeneratedLink = $linkData;
-            $this->generatedLinks[] = $linkData;
-            $this->showLinkModal = true;
-            
-            $this->dispatch('qr-link-generated', $linkData);
-            session()->flash('success', 'QR Code link berhasil dibuat!');
-            
-        } catch (\Exception $e) {
-            Log::error('Failed to generate QR link: ' . $e->getMessage());
-            session()->flash('error', 'Gagal membuat QR Code link.');
-        }
-    }
-    
-    /**
-     * Generate single use link
-     */
-    public function generateSingleUseLink()
-    {
-        try {
-            $linkData = ComplaintTokenService::generateSingleUseToken();
-            
-            $this->currentGeneratedLink = $linkData;
-            $this->generatedLinks[] = $linkData;
-            $this->showLinkModal = true;
-            
-            $this->dispatch('single-use-link-generated', $linkData);
-            session()->flash('success', 'Single-use link berhasil dibuat!');
-            
-        } catch (\Exception $e) {
-            Log::error('Failed to generate single-use link: ' . $e->getMessage());
-            session()->flash('error', 'Gagal membuat single-use link.');
-        }
-    }
-    
-    /**
-     * Copy link to clipboard (handled by frontend)
-     */
-    public function copyToClipboard($link)
-    {
-        $this->dispatch('copy-to-clipboard', $link);
-    }
-    
-    /**
-     * Close modal
-     */
-    public function closeModal()
-    {
-        $this->showLinkModal = false;
-        $this->currentGeneratedLink = null;
-    }
-    
-    public function render()
-    {
-        return view('livewire.complaint-manager');
     }
 }

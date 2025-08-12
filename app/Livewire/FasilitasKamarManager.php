@@ -16,6 +16,8 @@ class FasilitasKamarManager extends BaseTableManager
     public $kondisi;
     public $kamarFilter = '';
     public $kondisiFilter = '';
+    public $tipeKamarFilter = '';
+
 
     // Add filters to query string
     protected $queryString = [
@@ -24,6 +26,7 @@ class FasilitasKamarManager extends BaseTableManager
         'sortDirection',
         'kamarFilter' => ['except' => ''],
         'kondisiFilter' => ['except' => ''],
+        'tipeKamarFilter' => ['except' => ''],
     ];
 
     // Kondisi options
@@ -35,22 +38,51 @@ class FasilitasKamarManager extends BaseTableManager
     ];
 
     // Kamar options (will be loaded from database)
+    public $tipeKamarOptions = [];
     public $kamarOptions = [];
 
     public function mount()
     {
         parent::mount();
-        $this->sortField = 'namaFasilitas'; // Override default sort field
+        $this->sortField = 'namaFasilitas';
+
+        $this->loadTipeKamarOptions();
         $this->loadKamarOptions();
+    }
+
+    protected function loadTipeKamarOptions()
+    {
+        $this->tipeKamarOptions = Kamar::select('tipeKamar')
+            ->distinct()
+            ->orderBy('tipeKamar')
+            ->pluck('tipeKamar')
+            ->toArray();
     }
 
     protected function loadKamarOptions()
     {
-        $this->kamarOptions = Kamar::select('idKamar', 'nomorKamar')
+        $query = Kamar::query();
+
+        if ($this->tipeKamarFilter) {
+            $query->where('tipeKamar', $this->tipeKamarFilter);
+        }
+
+        $this->kamarOptions = $query->select('id', 'nomorKamar')
             ->orderBy('nomorKamar')
             ->get()
-            ->pluck('nomorKamar', 'idKamar')
+            ->pluck('nomorKamar', 'id')
             ->toArray();
+    }
+
+    public function updatingTipeKamarFilter()
+    {
+        $this->resetPage();
+        $this->loadKamarOptions();
+
+        // Jika kamar yang dipilih sebelumnya tidak ada di tipe kamar baru, reset
+        if (!array_key_exists($this->idKamar, $this->kamarOptions)) {
+            $this->idKamar = '';
+        }
     }
 
     public function updatingKamarFilter()
@@ -79,21 +111,27 @@ class FasilitasKamarManager extends BaseTableManager
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('namaFasilitas', 'like', '%' . $this->search . '%')
-                      ->orWhere('kondisi', 'like', '%' . $this->search . '%')
-                      ->orWhereHas('kamar', function ($kamarQuery) {
-                          $kamarQuery->where('nomorKamar', 'like', '%' . $this->search . '%');
-                      });
+                    ->orWhere('kondisi', 'like', '%' . $this->search . '%')
+                    ->orWhereHas('kamar', function ($kamarQuery) {
+                        $kamarQuery->where('nomorKamar', 'like', '%' . $this->search . '%');
+                    });
                 });
             })
             ->when($this->kamarFilter, function ($query) {
-                $query->where('idKamar', $this->kamarFilter);
+                $query->where('idKamar', $this->kamarFilter);  // masih pakai idKamar, ini kolom di fasilitas_kamar
             })
             ->when($this->kondisiFilter, function ($query) {
                 $query->where('kondisi', $this->kondisiFilter);
             })
+            ->when($this->tipeKamarFilter, function ($query) {
+                $query->whereHas('kamar', function ($q) {
+                    $q->where('tipeKamar', $this->tipeKamarFilter);
+                });
+            })
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
     }
+
 
     protected function resetForm(): void
     {
@@ -113,7 +151,7 @@ class FasilitasKamarManager extends BaseTableManager
     protected function getValidationRules(): array
     {
         return [
-            'idKamar' => 'required|exists:kamar,idKamar',
+            'idKamar' => 'required|exists:kamar,id',
             'namaFasilitas' => 'required|string|max:100',
             'kondisi' => 'required|in:' . implode(',', array_keys($this->kondisiOptions)),
         ];

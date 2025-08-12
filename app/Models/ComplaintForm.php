@@ -148,11 +148,8 @@ class ComplaintForm extends Model
     public static function getTipeKamarOptions()
     {
         return [
-            'standard' => 'Standard Room',
-            'superior' => 'Superior Room',
             'deluxe' => 'Deluxe Room',
-            'suite' => 'Suite Room',
-            'presidential' => 'Presidential Suite',
+            'Premium' => 'Premium Room'
         ];
     }
 }

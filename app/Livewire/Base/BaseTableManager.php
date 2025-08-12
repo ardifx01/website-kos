@@ -69,10 +69,23 @@ abstract class BaseTableManager extends Component
         $this->resetPage();
     }
 
+    // PERBAIKAN: Method untuk mendapatkan primary key dari model
+    protected function getModelKeyName(): string
+    {
+        try {
+            $model = app($this->getModelClass());
+            return $model->getKeyName();
+        } catch (\Exception $e) {
+            return 'id'; // fallback ke 'id'
+        }
+    }
+
+    // PERBAIKAN: Update method updatedSelectAll
     public function updatedSelectAll($value)
     {
         if ($value) {
-            $this->selectedRecords = $this->getRecords()->pluck('id')->toArray();
+            $keyName = $this->getModelKeyName();
+            $this->selectedRecords = $this->getRecords()->pluck($keyName)->toArray();
         } else {
             $this->selectedRecords = [];
         }
@@ -109,11 +122,13 @@ abstract class BaseTableManager extends Component
         $this->logActivity('form_opened', null, ['action' => 'create']);
     }
 
+    // PERBAIKAN: Method edit dengan primary key yang fleksibel
     public function edit($id)
     {
-        $record = $this->getModelClass()::findOrFail($id);
+        $keyName = $this->getModelKeyName();
+        $record = $this->getModelClass()::where($keyName, $id)->firstOrFail();
         
-        $this->recordId = $record->id;
+        $this->recordId = $record->{$keyName};
         $this->loadRecordData($record);
         
         $this->modalMode = 'edit';
@@ -121,14 +136,16 @@ abstract class BaseTableManager extends Component
         $this->showModal = true;
 
         // Log activity
-        $this->logActivity('form_opened', $record->id, ['action' => 'edit']);
+        $this->logActivity('form_opened', $record->{$keyName}, ['action' => 'edit']);
     }
 
+    // PERBAIKAN: Method view dengan primary key yang fleksibel
     public function view($id)
     {
-        $record = $this->getModelClass()::findOrFail($id);
+        $keyName = $this->getModelKeyName();
+        $record = $this->getModelClass()::where($keyName, $id)->firstOrFail();
         
-        $this->recordId = $record->id;
+        $this->recordId = $record->{$keyName};
         $this->loadRecordData($record);
         
         $this->modalMode = 'view';
@@ -136,7 +153,7 @@ abstract class BaseTableManager extends Component
         $this->showModal = true;
 
         // Log activity
-        $this->logActivity('viewed', $record->id, ['record_name' => $this->getRecordIdentifier($record)]);
+        $this->logActivity('viewed', $record->{$keyName}, ['record_name' => $this->getRecordIdentifier($record)]);
     }
 
     public function save()
@@ -148,19 +165,21 @@ abstract class BaseTableManager extends Component
                 $record = $this->store();
                 
                 if ($record && $this->enableLogging) {
-                    $this->logActivity('created', $record->id, $this->getLogData($record), 'Record created via form');
+                    $keyName = $this->getModelKeyName();
+                    $this->logActivity('created', $record->{$keyName}, $this->getLogData($record), 'Record created via form');
                 }
                 
                 $message = $this->getCreateSuccessMessage();
             } else {
-                $oldRecord = $this->getModelClass()::find($this->recordId);
+                $keyName = $this->getModelKeyName();
+                $oldRecord = $this->getModelClass()::where($keyName, $this->recordId)->first();
                 $oldData = $oldRecord ? $this->getLogData($oldRecord) : [];
                 
                 $record = $this->update();
                 
                 if ($record && $this->enableLogging) {
                     $newData = $this->getLogData($record->fresh());
-                    $this->logActivity('updated', $record->id, $this->getChangesData($oldData, $newData), 'Record updated via form');
+                    $this->logActivity('updated', $record->{$keyName}, $this->getChangesData($oldData, $newData), 'Record updated via form');
                 }
                 
                 $message = $this->getUpdateSuccessMessage();
@@ -168,7 +187,7 @@ abstract class BaseTableManager extends Component
 
             $this->closeModal();
             
-            // PERBAIKAN: Gunakan session flash message dan dispatch event
+            // Success message
             session()->flash('alert', [
                 'type' => 'success',
                 'message' => $message
@@ -194,11 +213,12 @@ abstract class BaseTableManager extends Component
         }
     }
 
-    // New delete confirmation methods
+    // PERBAIKAN: Method confirmDelete dengan primary key yang fleksibel
     public function confirmDelete($id)
     {
         try {
-            $record = $this->getModelClass()::findOrFail($id);
+            $keyName = $this->getModelKeyName();
+            $record = $this->getModelClass()::where($keyName, $id)->firstOrFail();
             
             if ($this->cannotDelete($record)) {
                 session()->flash('alert', [
@@ -220,7 +240,7 @@ abstract class BaseTableManager extends Component
             $this->deleteDetails = $this->getDeleteDetails($record) ?: $this->getRecordIdentifier($record);
             $this->showDeleteModal = true;
 
-            $this->logActivity('delete_requested', $record->id, ['record_name' => $this->getRecordIdentifier($record)]);
+            $this->logActivity('delete_requested', $record->{$keyName}, ['record_name' => $this->getRecordIdentifier($record)]);
 
         } catch (\Exception $e) {
             session()->flash('alert', [
@@ -235,6 +255,7 @@ abstract class BaseTableManager extends Component
         }
     }
 
+    // PERBAIKAN: Method confirmBulkDelete dengan primary key yang fleksibel
     public function confirmBulkDelete()
     {
         try {
@@ -251,7 +272,8 @@ abstract class BaseTableManager extends Component
                 return;
             }
 
-            $records = $this->getModelClass()::whereIn('id', $this->selectedRecords)->get();
+            $keyName = $this->getModelKeyName();
+            $records = $this->getModelClass()::whereIn($keyName, $this->selectedRecords)->get();
             $cannotDeleteRecords = [];
             
             foreach ($records as $record) {
@@ -361,9 +383,11 @@ abstract class BaseTableManager extends Component
         $this->isBulkDelete = false;
     }
 
+    // PERBAIKAN: Method performSingleDelete dengan primary key yang fleksibel
     protected function performSingleDelete()
     {
-        $record = $this->getModelClass()::findOrFail($this->deleteRecordId);
+        $keyName = $this->getModelKeyName();
+        $record = $this->getModelClass()::where($keyName, $this->deleteRecordId)->firstOrFail();
         
         if ($this->cannotDelete($record)) {
             throw new \Exception($this->getCannotDeleteMessage($record));
@@ -378,9 +402,11 @@ abstract class BaseTableManager extends Component
         $this->logActivity('deleted', $this->deleteRecordId, $recordData, 'Record deleted via form');
     }
 
+    // PERBAIKAN: Method performBulkDelete dengan primary key yang fleksibel
     protected function performBulkDelete()
     {
-        $records = $this->getModelClass()::whereIn('id', $this->selectedRecords)->get();
+        $keyName = $this->getModelKeyName();
+        $records = $this->getModelClass()::whereIn($keyName, $this->selectedRecords)->get();
         $deletedIds = [];
         $deletedNames = [];
         
@@ -389,7 +415,7 @@ abstract class BaseTableManager extends Component
                 continue; // Skip records that cannot be deleted
             }
             
-            $deletedIds[] = $record->id;
+            $deletedIds[] = $record->{$keyName};
             $deletedNames[] = $this->getRecordIdentifier($record);
             
             $this->performDelete($record);
@@ -526,9 +552,10 @@ abstract class BaseTableManager extends Component
     protected function cannotDelete($record): bool
     {
         // Default implementation: prevent user from deleting themselves
-        if (property_exists($record, 'id') && 
+        $keyName = $this->getModelKeyName();
+        if (property_exists($record, $keyName) && 
             auth()->check() && 
-            $record->id == auth()->id()) {
+            $record->{$keyName} == auth()->id()) {
             return true;
         }
         
@@ -540,9 +567,10 @@ abstract class BaseTableManager extends Component
      */
     protected function getCannotDeleteMessage($record): string
     {
-        if (property_exists($record, 'id') && 
+        $keyName = $this->getModelKeyName();
+        if (property_exists($record, $keyName) && 
             auth()->check() && 
-            $record->id == auth()->id()) {
+            $record->{$keyName} == auth()->id()) {
             return 'Anda tidak dapat menghapus akun Anda sendiri!';
         }
         
@@ -565,7 +593,8 @@ abstract class BaseTableManager extends Component
             return $record->email;
         }
         
-        return '#' . $record->id;
+        $keyName = $this->getModelKeyName();
+        return '#' . $record->{$keyName};
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Kamar;
+use App\Models\TipeKamar;
 use App\Livewire\Base\BaseTableManager;
 use Illuminate\Validation\Rule;
 use Illuminate\Database\Eloquent\Model;
@@ -11,11 +12,10 @@ class KamarManager extends BaseTableManager
 {
     // Properties specific to Kamar model
     public $nomorKamar;
-    public $tipeKamar;
-    public $hargaSewa;
+    public $tipe_kamar_id;
     public $status;
     public $statusFilter = '';
-    public $tipeFilter = '';
+    public $tipeKamarFilter = '';
 
     // Add filters to query string
     protected $queryString = [
@@ -23,23 +23,15 @@ class KamarManager extends BaseTableManager
         'sortField',
         'sortDirection',
         'statusFilter' => ['except' => ''],
-        'tipeFilter' => ['except' => ''],
+        'tipeKamarFilter' => ['except' => ''],
     ];
 
     // Status options
     public $statusOptions = [
         'tersedia' => 'Tersedia',
-        'disewa' => 'Disewa',
+        'terisi' => 'Terisi',
         'maintenance' => 'Maintenance',
-        'tidak_aktif' => 'Tidak Aktif'
-    ];
-
-    // Tipe kamar options
-    public $tipeOptions = [
-        'single' => 'Single',
-        'double' => 'Double',
-        'deluxe' => 'Deluxe',
-        'suite' => 'Suite'
+        'renovasi' => 'Renovasi',
     ];
 
     public function mount()
@@ -53,7 +45,7 @@ class KamarManager extends BaseTableManager
         $this->resetPage();
     }
 
-    public function updatingTipeFilter()
+    public function updatingTipeKamarFilter()
     {
         $this->resetPage();
     }
@@ -68,22 +60,28 @@ class KamarManager extends BaseTableManager
         return 'livewire.kamar-manager';
     }
 
+    // Override the primary key methods since Kamar uses 'idKamar'
+    protected function getRecordIdField(): string
+    {
+        return 'idKamar';
+    }
+
     protected function getRecords()
     {
-        return Kamar::query()
+        return Kamar::with(['tipeKamar', 'creator'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('nomorKamar', 'like', '%' . $this->search . '%')
-                      ->orWhere('tipeKamar', 'like', '%' . $this->search . '%')
-                      ->orWhere('hargaSewa', 'like', '%' . $this->search . '%')
-                      ->orWhere('status', 'like', '%' . $this->search . '%');
+                      ->orWhereHas('tipeKamar', function ($tipeQuery) {
+                          $tipeQuery->where('nama', 'like', '%' . $this->search . '%');
+                      });
                 });
             })
             ->when($this->statusFilter, function ($query) {
                 $query->where('status', $this->statusFilter);
             })
-            ->when($this->tipeFilter, function ($query) {
-                $query->where('tipeKamar', $this->tipeFilter);
+            ->when($this->tipeKamarFilter, function ($query) {
+                $query->where('tipe_kamar_id', $this->tipeKamarFilter);
             })
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
@@ -93,16 +91,14 @@ class KamarManager extends BaseTableManager
     {
         $this->recordId = null;
         $this->nomorKamar = '';
-        $this->tipeKamar = '';
-        $this->hargaSewa = '';
-        $this->status = 'tersedia';
+        $this->tipe_kamar_id = '';
+        $this->status = 'tersedia'; // Default status
     }
 
     protected function loadRecordData($record): void
     {
         $this->nomorKamar = $record->nomorKamar;
-        $this->tipeKamar = $record->tipeKamar;
-        $this->hargaSewa = $record->hargaSewa;
+        $this->tipe_kamar_id = $record->tipe_kamar_id;
         $this->status = $record->status;
     }
 
@@ -112,12 +108,11 @@ class KamarManager extends BaseTableManager
             'nomorKamar' => [
                 'required',
                 'string',
-                'max:20',
+                'max:10',
                 Rule::unique('kamar', 'nomorKamar')->ignore($this->recordId, 'idKamar'),
             ],
-            'tipeKamar' => 'required|in:' . implode(',', array_keys($this->tipeOptions)),
-            'hargaSewa' => 'required|numeric|min:0',
-            'status' => 'required|in:' . implode(',', array_keys($this->statusOptions)),
+            'tipe_kamar_id' => 'required|exists:tipe_kamar,id',
+            'status' => 'required|in:tersedia,terisi,maintenance,renovasi',
         ];
     }
 
@@ -125,8 +120,7 @@ class KamarManager extends BaseTableManager
     {
         $data = [
             'nomorKamar' => $this->nomorKamar,
-            'tipeKamar' => $this->tipeKamar,
-            'hargaSewa' => $this->hargaSewa,
+            'tipe_kamar_id' => $this->tipe_kamar_id,
             'status' => $this->status,
             'created_by' => auth()->id(),
         ];
@@ -139,12 +133,11 @@ class KamarManager extends BaseTableManager
 
     protected function update(): ?Model
     {
-        $kamar = Kamar::findOrFail($this->recordId);
+        $kamar = Kamar::where('idKamar', $this->recordId)->firstOrFail();
         
         $data = [
             'nomorKamar' => $this->nomorKamar,
-            'tipeKamar' => $this->tipeKamar,
-            'hargaSewa' => $this->hargaSewa,
+            'tipe_kamar_id' => $this->tipe_kamar_id,
             'status' => $this->status,
             'updated_by' => auth()->id(),
         ];
@@ -162,28 +155,29 @@ class KamarManager extends BaseTableManager
     {
         $data = parent::getLogData($record);
         
-        // Tambah informasi tambahan ke log
-        $data['status_label'] = $this->statusOptions[$record->status] ?? $record->status;
-        $data['tipe_label'] = $this->tipeOptions[$record->tipeKamar] ?? $record->tipeKamar;
-        $data['harga_formatted'] = 'Rp ' . number_format($record->hargaSewa, 0, ',', '.');
+        // Tambah informasi tipe kamar ke log
+        if ($record->tipeKamar) {
+            $data['tipe_kamar_nama'] = $record->tipeKamar->nama;
+            $data['harga_sewa'] = $record->tipeKamar->hargaSewa;
+        }
         
         return $data;
     }
 
     protected function cannotDelete($record): bool
     {
-        // Tidak bisa hapus kamar yang sedang disewa
-        if ($record->status === 'disewa') {
-            return true;
-        }
-        
-        return false;
+        // Tidak bisa hapus kamar yang sedang terisi atau dalam maintenance
+        return in_array($record->status, ['terisi', 'maintenance']);
     }
     
     protected function getCannotDeleteMessage($record): string
     {
-        if ($record->status === 'disewa') {
-            return 'Kamar yang sedang disewa tidak dapat dihapus!';
+        if ($record->status === 'terisi') {
+            return 'Kamar tidak dapat dihapus karena sedang terisi!';
+        }
+        
+        if ($record->status === 'maintenance') {
+            return 'Kamar tidak dapat dihapus karena sedang dalam maintenance!';
         }
         
         return parent::getCannotDeleteMessage($record);
@@ -192,8 +186,8 @@ class KamarManager extends BaseTableManager
     protected function getAdditionalViewData(): array
     {
         return [
+            'tipeKamars' => TipeKamar::all(),
             'statusOptions' => $this->statusOptions,
-            'tipeOptions' => $this->tipeOptions,
         ];
     }
 
@@ -228,33 +222,53 @@ class KamarManager extends BaseTableManager
         return 'Kamar berhasil dihapus!';
     }
 
-    // Helper method untuk format harga
-    public function formatHarga($harga)
-    {
-        return 'Rp ' . number_format($harga, 0, ',', '.');
-    }
-
-    // Helper method untuk badge status
+    // Helper method to get status badge class
     public function getStatusBadgeClass($status)
     {
-        return match($status) {
+        $classes = [
             'tersedia' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-            'disewa' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+            'terisi' => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
             'maintenance' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-            'tidak_aktif' => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-            default => 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
-        };
+            'renovasi' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+        ];
+
+        return $classes[$status] ?? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
     }
 
-    // Helper method untuk badge tipe
-    public function getTipeBadgeClass($tipe)
+    // Helper method to format currency
+    public function formatCurrency($amount)
     {
-        return match($tipe) {
-            'single' => 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-            'double' => 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
-            'deluxe' => 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
-            'suite' => 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-            default => 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
-        };
+        return 'Rp ' . number_format($amount, 0, ',', '.');
+    }
+
+    // Override delete method to handle custom primary key
+    public function delete($id)
+    {
+        try {
+            $record = Kamar::where('idKamar', $id)->firstOrFail();
+            
+            if ($this->cannotDelete($record)) {
+                $this->dispatch('show-alert', [
+                    'type' => 'error',
+                    'message' => $this->getCannotDeleteMessage($record)
+                ]);
+                return;
+            }
+
+            $record->update(['deleted_by' => auth()->id()]);
+            $record->delete();
+
+            $this->dispatch('show-alert', [
+                'type' => 'success',
+                'message' => $this->getDeleteSuccessMessage()
+            ]);
+
+            $this->resetPage();
+        } catch (\Exception $e) {
+            $this->dispatch('show-alert', [
+                'type' => 'error',
+                'message' => 'Terjadi kesalahan saat menghapus data!'
+            ]);
+        }
     }
 }

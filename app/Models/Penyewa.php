@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Auth;
 
-class BookingForm extends Model
+class Penyewa extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
+
+    protected $table = 'penyewas';
 
     protected $fillable = [
         'nama_lengkap',
@@ -21,55 +23,51 @@ class BookingForm extends Model
         'tipe_kamar',
         'jumlah_orang',
         'tanggal_masuk',
-        'status_booking',
+        'status_sewa',
         'catatan',
+        'booking_form_id',
         'created_by',
         'updated_by',
         'deleted_by',
     ];
 
-    protected static function boot()
+    // Casting kolom tanggal ke Carbon
+    protected $casts = [
+        'tanggal_masuk' => 'date',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
+    /**
+     * Relasi ke booking form (jika berasal dari booking).
+     */
+    public function bookingForm()
     {
-        parent::boot();
-
-        static::creating(function ($model) {
-            if (Auth::check()) {
-                $model->created_by = Auth::id();
-            }
-        });
-
-        static::updating(function ($model) {
-            if (Auth::check()) {
-                $model->updated_by = Auth::id();
-            }
-        });
-
-        static::deleting(function ($model) {
-            if (Auth::check()) {
-                $model->deleted_by = Auth::id();
-                $model->save();
-            }
-        });
+        return $this->belongsTo(BookingForm::class, 'booking_form_id');
     }
 
+    /**
+     * User yang membuat data ini.
+     */
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /**
+     * User yang terakhir mengubah data ini.
+     */
     public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    /**
+     * User yang menghapus data ini.
+     */
     public function deleter()
     {
         return $this->belongsTo(User::class, 'deleted_by');
     }
-
-    public function penyewa()
-    {
-        return $this->hasOne(Penyewa::class, 'booking_form_id');
-    }
-
 }

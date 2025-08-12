@@ -11,27 +11,26 @@ class Kamar extends Model
     use HasFactory, SoftDeletes;
 
     protected $table = 'kamar';
-    protected $primaryKey = 'idKamar';
+    protected $primaryKey = 'id';  // Sesuai migrasi: primary key idKamar
     public $incrementing = true;
     protected $keyType = 'int';
 
     protected $fillable = [
         'nomorKamar',
-        'tipeKamar',
-        'hargaSewa',
+        'tipe_kamar_id',  // foreign key ke tipe kamar
         'status',
         'created_by',
         'updated_by',
         'deleted_by',
     ];
 
-    // Relasi ke fasilitas kamar
-    public function fasilitas()
+    // Relasi ke tipe kamar (banyak kamar milik satu tipe kamar)
+    public function tipeKamar()
     {
-        return $this->hasMany(FasilitasKamar::class, 'idKamar', 'idKamar');
+        return $this->belongsTo(TipeKamar::class, 'tipe_kamar_id', 'id');
     }
 
-    // Relasi ke histori harga renovasi
+    // Relasi ke histori harga renovasi (jika masih digunakan)
     public function historiHarga()
     {
         return $this->hasMany(HistoriHargaRenovasi::class, 'idKamar', 'idKamar');
