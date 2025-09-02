@@ -18,6 +18,7 @@ use App\Livewire\BookingFormManager;
 
 use App\Livewire\PenyewaManager;
 use App\Livewire\TipeKamarManager;
+use App\Livewire\PembayaranManager;
 
 use App\Http\Controllers\PublicBookingController;
 use App\Http\Controllers\PublicComplaintController;
@@ -42,6 +43,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/complaint-manager', ComplaintManager::class)->name('complaint-manager.index');
     Route::get('/booking-form-manager', BookingFormManager::class)->name('booking-form-manager.index');
     Route::get('/penyewa-manager', PenyewaManager::class)->name('penyewa-manager.index');
+    Route::get('/pembayaran-manager', PembayaranManager::class)->name('pembayaran-manager.index');
     Route::get('/tipe-kamar-manager', TipeKamarManager::class)->name('tipe-kamar-manager.index');
     Route::get('settings/profile', Profile::class)->name('settings.profile');
     Route::get('settings/password', Password::class)->name('settings.password');

@@ -60,10 +60,10 @@ class KamarManager extends BaseTableManager
         return 'livewire.kamar-manager';
     }
 
-    // Override the primary key methods since Kamar uses 'idKamar'
+    // Override the primary key methods since Kamar uses 'id'
     protected function getRecordIdField(): string
     {
-        return 'idKamar';
+        return 'id';
     }
 
     protected function getRecords()
@@ -109,7 +109,7 @@ class KamarManager extends BaseTableManager
                 'required',
                 'string',
                 'max:10',
-                Rule::unique('kamar', 'nomorKamar')->ignore($this->recordId, 'idKamar'),
+                Rule::unique('kamar', 'nomorKamar')->ignore($this->recordId, 'id'),
             ],
             'tipe_kamar_id' => 'required|exists:tipe_kamar,id',
             'status' => 'required|in:tersedia,terisi,maintenance,renovasi',
@@ -133,7 +133,7 @@ class KamarManager extends BaseTableManager
 
     protected function update(): ?Model
     {
-        $kamar = Kamar::where('idKamar', $this->recordId)->firstOrFail();
+        $kamar = Kamar::where('id', $this->recordId)->firstOrFail();
         
         $data = [
             'nomorKamar' => $this->nomorKamar,
@@ -245,7 +245,7 @@ class KamarManager extends BaseTableManager
     public function delete($id)
     {
         try {
-            $record = Kamar::where('idKamar', $id)->firstOrFail();
+            $record = Kamar::where('id', $id)->firstOrFail();
             
             if ($this->cannotDelete($record)) {
                 $this->dispatch('show-alert', [

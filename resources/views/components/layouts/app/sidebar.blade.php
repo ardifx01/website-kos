@@ -104,7 +104,7 @@
                 <x-app-logo />
             </a>
 
-            <flux:navlist class="w-64">
+            <flux:navlist class="w-55">
                     <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('penyewa.*')" wire:navigate>
                         Dashboard
                     </flux:navlist.item>
@@ -112,7 +112,7 @@
                     <flux:navlist.item :href="route('penyewa-manager.index')" :current="request()->routeIs('penyewa-manager.*')" wire:navigate>
                         Penyewa
                     </flux:navlist.item>
-                    <flux:navlist.item :href="route('dashboard')" :current="request()->routeIs('pembayaran.*')" wire:navigate>
+                    <flux:navlist.item :href="route('pembayaran-manager.index')" :current="request()->routeIs('pembayaran-manager.*')" wire:navigate>
                         Pembayaran
                     </flux:navlist.item>
                     <flux:navlist.item :href="route('booking-form-manager.index')" :current="request()->routeIs('booking-form-manager.*')" wire:navigate>
